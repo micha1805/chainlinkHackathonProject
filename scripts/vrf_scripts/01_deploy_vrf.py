@@ -6,7 +6,7 @@ from scripts.helpful_scripts import (
 )
 
 
-def depoly_vrf():
+def deploy_vrf():
     account = get_account()
     print(f"On network {network.show_active()}")
     keyhash = config["networks"][network.show_active()]["keyhash"]
@@ -30,4 +30,4 @@ def depoly_vrf():
 
 
 def main():
-    depoly_vrf()
+    deploy_vrf()
