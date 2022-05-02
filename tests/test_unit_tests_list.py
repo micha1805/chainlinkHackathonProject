@@ -1,3 +1,11 @@
+from brownie import accounts, network, MutualFund
+import pytest
+from scripts.helpful_scripts import (
+	LOCAL_BLOCKCHAIN_ENVIRONMENTS,
+	get_account,
+	get_contract,
+	)
+
 # ## list of tests todo
 
 
@@ -7,7 +15,13 @@
 
 # contract has and admin (ideally no but it's for the hackathon purpose, to keep a grip on the deployed contract)
 def test_contract_has_an_owner():
-	pass
+	if network.show_active() not in LOCAL_BLOCKCHAIN_ENVIRONMENTS:
+		pytest.skip("Only for local environnment testing")
+	account = get_account()
+	mutual_fund = MutualFund.deploy({"from": account})
+	owner = mutual_fund.getOwner({"from": account})
+	assert( account == owner)
+
 # a user can enter contract
 def test_a_user_can_enter_contract():
 	pass
