@@ -33,4 +33,8 @@ contract MutualFund{
 
 	function submitARequest() public {}
 
+	function getOwner() public view returns(address){
+		return admin;
+	}
+
 }
