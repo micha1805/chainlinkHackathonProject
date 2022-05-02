@@ -15,10 +15,10 @@ contract MutualFund{
 		users.push(msg.sender);
 	}
 
-	function payMonthlyFee() public{
-		userBalance[msg.sender] = userBalance[msg.sender] + msg.value;
-		// address(this).balance = address(this).balance + msg.value;
-	}
+	// function payMonthlyFee() public{
+	// 	userBalance[msg.sender] = userBalance[msg.sender] + msg.value;
+	// 	// address(this).balance = address(this).balance + msg.value;
+	// }
 
 
 
