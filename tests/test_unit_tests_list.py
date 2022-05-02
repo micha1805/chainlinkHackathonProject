@@ -19,16 +19,20 @@ def test_contract_has_an_owner():
 		pytest.skip("Only for local environnment testing")
 	account = get_account()
 	mutual_fund = MutualFund.deploy({"from": account})
-	owner = mutual_fund.admin()
+	owner = mutual_fund.owner()
 
 	assert( account == owner)
+
+
+
+
 
 # a user can enter contract
 def test_a_user_can_enter_contract():
 
-	# create contract and admin
-	admin = get_account()
-	mutual_fund = MutualFund.deploy({"from": admin})
+	# create contract and owner
+	owner = get_account()
+	mutual_fund = MutualFund.deploy({"from": owner})
 
 	# create a random user
 	random_user = get_account(2)
@@ -39,6 +43,10 @@ def test_a_user_can_enter_contract():
 
 	# get user frome the array :
 	assert( mutual_fund.users(0) == random_user)
+
+
+
+
 
 # a user can quit contract
 def test_a_user_can_quit_contract():
