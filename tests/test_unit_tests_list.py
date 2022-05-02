@@ -13,18 +13,33 @@ from scripts.helpful_scripts import (
 # ## BACK
 
 
-# contract has and admin (ideally no but it's for the hackathon purpose, to keep a grip on the deployed contract)
+# contract has and admin (ideally no but it's for the hackathon purpose, to keep a grip on the deployed contract if necessary)
 def test_contract_has_an_owner():
 	if network.show_active() not in LOCAL_BLOCKCHAIN_ENVIRONMENTS:
 		pytest.skip("Only for local environnment testing")
 	account = get_account()
 	mutual_fund = MutualFund.deploy({"from": account})
-	owner = mutual_fund.getOwner({"from": account})
+	owner = mutual_fund.admin()
+
 	assert( account == owner)
 
 # a user can enter contract
 def test_a_user_can_enter_contract():
-	pass
+
+	# create contract and admin
+	admin = get_account()
+	mutual_fund = MutualFund.deploy({"from": admin})
+
+	# create a random user
+	random_user = get_account(2)
+
+
+	# attempt to enter the contract :
+	mutual_fund.enter({"from": random_user})
+
+	# get user frome the array :
+	assert( mutual_fund.users(0) == random_user)
+
 # a user can quit contract
 def test_a_user_can_quit_contract():
 	pass
