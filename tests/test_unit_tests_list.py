@@ -47,6 +47,29 @@ def test_a_user_can_enter_contract():
 
 
 
+# a user can pay and enter the contract
+def test_a_user_can_pay_while_entering_contract():
+
+	TICKET_VALUE = 10000000000 #random value
+
+	# create contract and owner
+	owner = get_account()
+	mutual_fund = MutualFund.deploy({"from": owner})
+
+	# create random users
+	random_user1 = get_account(2)
+	random_user2 = get_account(3)
+
+	# attempt to enter the contract :
+	mutual_fund.enter({"from": random_user1, "value": TICKET_VALUE})
+	mutual_fund.enter({"from": random_user2, "value": TICKET_VALUE})
+
+
+	# get user from the array :
+	assert( mutual_fund.users(0) == random_user1)
+	assert( mutual_fund.users(1) == random_user2)
+	assert( mutual_fund.balance() == TICKET_VALUE*2)
+
 
 # a user can quit contract
 def test_a_user_can_quit_contract():
