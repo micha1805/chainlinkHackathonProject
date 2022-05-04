@@ -1,7 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-contract MutualFund{
+import "@openzeppelin/contracts/access/Ownable.sol";
+
+contract MutualFund is Ownable {
 
 
 
@@ -17,7 +19,7 @@ contract MutualFund{
 
 
 
-	address public owner;
+	// address public owner;
 	address payable[] public users;
 	address[] public requestsArray;
 	uint256 public randomness;
@@ -36,7 +38,7 @@ contract MutualFund{
 
 
 	constructor(){
-		owner = msg.sender;
+		// owner = msg.sender;
 	}
 
 	function enter() public payable {
@@ -76,7 +78,6 @@ contract MutualFund{
 		return address(this).balance;
 	}
 
-	function quit() public {}
 	function makeARequest() public {}
 	function submitARequest() public {}
 	function getTotalContributionOfUser() public {}
@@ -85,6 +86,10 @@ contract MutualFund{
 	}
 	function createAnNFTRequest() private {}
 
+
+	function modifyJureesNumber(uint256 _newJureesNumber) public onlyOwner {
+
+	}
 
 	// // To be understood :
 	// function checkEachMonth() private {} // Chainlink keeper CRON?
