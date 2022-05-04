@@ -70,6 +70,7 @@ def test_a_user_can_pay_while_entering_contract():
 	assert( mutual_fund.users(1) == random_user2)
 	assert( mutual_fund.balance() == TICKET_VALUE*2)
 
+# test random
 
 # a user can quit contract
 def test_a_user_can_quit_contract():

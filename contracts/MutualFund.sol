@@ -23,6 +23,7 @@ contract MutualFund{
 	uint256 public randomness;
 	mapping(address => uint256) public userBalance; // in WEI
 	uint256 MAX_MULTIPLIER = 10; // eventually modifiable by owner
+	uint256 JUREES_NUMBER = 100; // eventually modifiable by owner
 
 
 
@@ -38,8 +39,20 @@ contract MutualFund{
 		owner = msg.sender;
 	}
 
-	function enter() public {
+	function enter() public payable {
+
+		// check if user is already in user's array AND balance is non zero :
+		///
+	  // require(msg.value >= getEntranceFee(), "User already");
+
+		// add user to user list:
 		users.push(payable(msg.sender));
+		// set his balance to
+		userBalance[payable(msg.sender)] = msg.value;
+	}
+
+	function quit() public {
+		// just set mapping value to 0, cannot remove user from array
 	}
 
 
@@ -66,14 +79,14 @@ contract MutualFund{
 	function quit() public {}
 	function makeARequest() public {}
 	function submitARequest() public {}
-	function getToalContributionOfUser() public {}
+	function getTotalContributionOfUser() public {}
 	function getRandomArrayOfJurees() private{
 		// Get 1 number and increment ? => no
 	}
 	function createAnNFTRequest() private {}
 
 
-	// // To understand :
+	// // To be understood :
 	// function checkEachMonth() private {} // Chainlink keeper CRON?
 	//
 
