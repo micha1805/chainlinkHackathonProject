@@ -7,7 +7,8 @@ from brownie import (
     MockOracle,
     VRFCoordinatorMock,
     Contract,
-    web3
+    web3,
+    MutualFund
 )
 import time
 
@@ -29,6 +30,27 @@ contract_to_mock = {
 
 DECIMALS = 18
 INITIAL_VALUE = web3.toWei(2000, "ether")
+
+def deploy_mutual_fund(index=None):
+    # account = get_account(id="freecodecamp-account")
+    account = get_account(index)
+
+    # check the constructor to get all the needed parameters
+    mutual_fund = MutualFund.deploy(
+        get_contract("vrf_coordinator").address,
+        get_contract("link_token").address,
+        config["networks"][network.show_active()]["fee"],
+        config["networks"][network.show_active()]["keyhash"],
+        {"from": account},
+        # verify is set to default = False
+        publish_source=config["networks"][network.show_active()].get("verify", False),
+    )
+    print("Deployed Mutual Fund contract")
+    return mutual_fund
+
+
+
+
 
 
 def get_account(index=None, id=None):

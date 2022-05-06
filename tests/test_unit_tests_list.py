@@ -4,6 +4,7 @@ from scripts.helpful_scripts import (
 	LOCAL_BLOCKCHAIN_ENVIRONMENTS,
 	get_account,
 	get_contract,
+	deploy_mutual_fund
 	)
 
 # ## list of tests todo
@@ -12,15 +13,24 @@ from scripts.helpful_scripts import (
 
 # ## BACK
 
+# contract ca be deployed
+def test_contract_can_be_deployed():
+	indexAccount = 0
+	account = get_account(indexAccount)
+	mutual_fund = deploy_mutual_fund(indexAccount)
+
+	assert(mutual_fund)
 
 # contract has and admin (ideally no but it's for the hackathon purpose, to keep a grip on the deployed contract if necessary)
 def test_contract_has_an_owner():
 	if network.show_active() not in LOCAL_BLOCKCHAIN_ENVIRONMENTS:
 		pytest.skip("Only for local environnment testing")
 
-	account = get_account()
-	mutual_fund = MutualFund.deploy({"from": account})
-	owner = mutual_fund.owner()
+	indexAccount = 0
+	owner = get_account(indexAccount)
+	mutual_fund = deploy_mutual_fund(indexAccount)
+
+	account = mutual_fund.owner()
 
 	assert( account == owner)
 
@@ -28,9 +38,11 @@ def test_contract_has_an_owner():
 def test_a_user_can_enter_contract():
 	if network.show_active() not in LOCAL_BLOCKCHAIN_ENVIRONMENTS:
 	   pytest.skip("Only for local environnment testing")
+
 	# create contract and owner
-	owner = get_account()
-	mutual_fund = MutualFund.deploy({"from": owner})
+	indexAccount = 0
+	owner = get_account(indexAccount)
+	mutual_fund = deploy_mutual_fund(indexAccount)
 
 	# create a random user
 	random_user = get_account(2)
@@ -47,47 +59,43 @@ def test_a_user_can_enter_contract():
 
 # a user can pay and enter the contract
 def test_a_user_can_pay_while_entering_contract():
-    if network.show_active() not in LOCAL_BLOCKCHAIN_ENVIRONMENTS:
-        pytest.skip("Only for local environnment testing")
+	if network.show_active() not in LOCAL_BLOCKCHAIN_ENVIRONMENTS:
+		pytest.skip("Only for local environnment testing")
 
-    TICKET_VALUE = 10000000000 #random value
-    # create contract and owner
-    owner = get_account()
-    mutual_fund = MutualFund.deploy({"from": owner})
+	TICKET_VALUE = 10000000000 #random value
+	# create contract and owner
+	indexAccount = 0
+	owner = get_account(indexAccount)
+	mutual_fund = deploy_mutual_fund(indexAccount)
 
-    # create random users
-    random_user1 = get_account(2)
-    random_user2 = get_account(3)
+	# create random users
+	random_user1 = get_account(2)
+	random_user2 = get_account(3)
 
-    # attempt to enter the contract :
-    mutual_fund.enter({"from": random_user1, "value": TICKET_VALUE})
-    mutual_fund.enter({"from": random_user2, "value": TICKET_VALUE})
+	# attempt to enter the contract :
+	mutual_fund.enter({"from": random_user1, "value": TICKET_VALUE})
+	mutual_fund.enter({"from": random_user2, "value": TICKET_VALUE})
 
 
-    # get user from the array :
-    assert( mutual_fund.users(0) == random_user1)
-    assert( mutual_fund.users(1) == random_user2)
-    assert( mutual_fund.balance() == TICKET_VALUE*2)
+	# get user from the array :
+	assert( mutual_fund.users(0) == random_user1)
+	assert( mutual_fund.users(1) == random_user2)
+	assert( mutual_fund.balance() == TICKET_VALUE*2)
 
 # The owner can change settings
 def test_owner_can_change_settings():
-
 	if network.show_active() not in LOCAL_BLOCKCHAIN_ENVIRONMENTS:
 		pytest.skip()
-
-
 	# create contract, owner and simple user
-	owner = get_account()
-	simple_user = get_account(2)
-	mutual_fund = MutualFund.deploy({"from": owner})
-
+	indexAccount = 0
+	owner = get_account(0)
+	simple_user = get_account(1)
+	mutual_fund = deploy_mutual_fund(indexAccount)
 	# change settings
 	new_jurees_number = 33
 	new_multiple = 6
-
 	mutual_fund.modifyJureesNumber(new_jurees_number, {"from": owner})
 	mutual_fund.modifyMultiple(new_multiple, {"from": owner})
-
 	assert(mutual_fund.jurees_number() == new_jurees_number)
 	assert(mutual_fund.max_multiple() == new_multiple)
 
@@ -96,23 +104,25 @@ def test_owner_can_change_settings():
 def test_simple_user_cannot_change_settings():
 	if network.show_active() not in LOCAL_BLOCKCHAIN_ENVIRONMENTS:
 		pytest.skip()
-
 	# change settings
 	new_jurees_number = 33
 	new_multiple = 6
-
 	# create contract, owner and simple user
-	owner = get_account()
-	simple_user = get_account(2)
-	mutual_fund = MutualFund.deploy({"from": owner})
-
+	indexAccount = 0
+	owner = get_account(0)
+	simple_user = get_account(1)
+	mutual_fund = deploy_mutual_fund(indexAccount)
 	with pytest.raises(exceptions.VirtualMachineError):
 		mutual_fund.modifyJureesNumber(new_jurees_number, {"from": simple_user})
-
 	with pytest.raises(exceptions.VirtualMachineError):
 		mutual_fund.modifyMultiple(new_multiple, {"from": simple_user})
 
 
+# test deploy script
+def test_deploy_scripts():
+	mutual_fund = deploy_mutual_fund()
+
+	assert(mutual_fund)
 
 
 # a user can quit contract
