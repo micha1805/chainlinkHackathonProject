@@ -83,39 +83,39 @@ def test_a_user_can_pay_while_entering_contract():
 	assert( mutual_fund.balance() == TICKET_VALUE*2)
 
 # The owner can change settings
-def test_owner_can_change_settings():
-	if network.show_active() not in LOCAL_BLOCKCHAIN_ENVIRONMENTS:
-		pytest.skip()
-	# create contract, owner and simple user
-	indexAccount = 0
-	owner = get_account(0)
-	simple_user = get_account(1)
-	mutual_fund = deploy_mutual_fund(indexAccount)
-	# change settings
-	new_jurees_number = 33
-	new_multiple = 6
-	mutual_fund.modifyJureesNumber(new_jurees_number, {"from": owner})
-	mutual_fund.modifyMultiple(new_multiple, {"from": owner})
-	assert(mutual_fund.jurees_number() == new_jurees_number)
-	assert(mutual_fund.max_multiple() == new_multiple)
+# def test_owner_can_change_settings():
+# 	if network.show_active() not in LOCAL_BLOCKCHAIN_ENVIRONMENTS:
+# 		pytest.skip()
+# 	# create contract, owner and simple user
+# 	indexAccount = 0
+# 	owner = get_account(0)
+# 	simple_user = get_account(1)
+# 	mutual_fund = deploy_mutual_fund(indexAccount)
+# 	# change settings
+# 	new_jurees_number = 33
+# 	new_multiple = 6
+# 	mutual_fund.modifyJureesNumber(new_jurees_number, {"from": owner})
+# 	mutual_fund.modifyMultiple(new_multiple, {"from": owner})
+# 	assert(mutual_fund.jurees_number() == new_jurees_number)
+# 	assert(mutual_fund.max_multiple() == new_multiple)
 
 
 # Non owner cannot change settings
-def test_simple_user_cannot_change_settings():
-	if network.show_active() not in LOCAL_BLOCKCHAIN_ENVIRONMENTS:
-		pytest.skip()
-	# change settings
-	new_jurees_number = 33
-	new_multiple = 6
-	# create contract, owner and simple user
-	indexAccount = 0
-	owner = get_account(0)
-	simple_user = get_account(1)
-	mutual_fund = deploy_mutual_fund(indexAccount)
-	with pytest.raises(exceptions.VirtualMachineError):
-		mutual_fund.modifyJureesNumber(new_jurees_number, {"from": simple_user})
-	with pytest.raises(exceptions.VirtualMachineError):
-		mutual_fund.modifyMultiple(new_multiple, {"from": simple_user})
+# def test_simple_user_cannot_change_settings():
+# 	if network.show_active() not in LOCAL_BLOCKCHAIN_ENVIRONMENTS:
+# 		pytest.skip()
+# 	# change settings
+# 	new_jurees_number = 33
+# 	new_multiple = 6
+# 	# create contract, owner and simple user
+# 	indexAccount = 0
+# 	owner = get_account(0)
+# 	simple_user = get_account(1)
+# 	mutual_fund = deploy_mutual_fund(indexAccount)
+# 	with pytest.raises(exceptions.VirtualMachineError):
+# 		mutual_fund.modifyJureesNumber(new_jurees_number, {"from": simple_user})
+# 	with pytest.raises(exceptions.VirtualMachineError):
+# 		mutual_fund.modifyMultiple(new_multiple, {"from": simple_user})
 
 
 # test deploy script
