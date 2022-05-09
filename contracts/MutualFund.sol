@@ -47,17 +47,10 @@ contract MutualFund is VRFConsumerBase, Ownable {
 
 	// custom type to store request info :
 	struct Request {
-		// if the request is still under review, accepted, refused, or error
-		// (ex: the request was made during a FUND STATE of COMPUTING_JUREES)
 		REQUEST_STATE state;
-		// index is the place in each array.
-		uint256 index;
-		// array of jurees
-		address payable[] jurees;
+		address payable[5] jury_members;
 		// mapping to see if juree has voted :
 		mapping(address => bool) hasVoted; // default is false : OK
-		// address of the nft for the request :
-		address nft;
 	}
 
 	// store all requests :
@@ -71,8 +64,7 @@ contract MutualFund is VRFConsumerBase, Ownable {
 	uint256 public jurees_number = 5;
 	uint256 public max_percentage_per_request = 1;
 	// for simplicity the juree's numbere is fixed :
-	uint256 public FIXED_JUREE_NUMBER = 5;
-	uint256[5] public fake_random_indexes_array = [ 2, 3, 5, 6, 8];
+	// uint256 public FIXED_JURY_MEMBERS_AMOUNT = 5;
 
 	// VRF Settings
 	uint256 public fee;
@@ -106,7 +98,6 @@ contract MutualFund is VRFConsumerBase, Ownable {
 	function enter() public payable {
 
 		// check if user is already in user's array AND balance is non zero :
-		///
 	  // require(msg.value >= getEntranceFee(), "User already");
 
 		// add user to user list:
@@ -114,10 +105,6 @@ contract MutualFund is VRFConsumerBase, Ownable {
 		// set his balance to
 		userBalance[payable(msg.sender)] = msg.value;
 	}
-
-	// function quit() public {
-	// 	// just set mapping value to 0, cannot remove user from array
-	// }
 
 	function payMonthlyFee() public payable{
 		userBalance[address(msg.sender)] = userBalance[address(msg.sender)] + msg.value;
@@ -154,18 +141,36 @@ contract MutualFund is VRFConsumerBase, Ownable {
 
 
 
+	function getJury_members() private returns(address payable[5] memory){
+		// hardcoded array of 5 elements, to begin with :
+		return [users[2], users[4], users[5], users[7], users[8]];
+	}
+
+
+
+
 	function submitARequest() public {
 		require(
 			fund_state == FUND_STATE.READY,
 			"Contract is currently busy creating a juree, try later"
 			);
 
+
 		// create a random array of jury members.
+		address payable[5] memory jury_members;
+		jury_members = getJury_members();
+
 		// create a Request struct
+		Request memory newRequest;
+
+		newRequest.state = REQUEST_STATE.OPEN;
+		newRequest.jury_members = jury_members;
+
 		// create the nft (ideally)
 		// put it inside the requests array
+		all_requests_array.push(newRequest);
 
-		// DO STUFF
+
 	}
 
 
@@ -183,42 +188,38 @@ contract MutualFund is VRFConsumerBase, Ownable {
 	}
 
 
-	function getRandomArrayOfJurees() private {
+	// function getRandomArrayOfJurees() private {
 
-		// This function gets ONE random number from Chainlink VRF, converts it to an index number, from
-		// then iterate to the N next adresses to get correct amount of accounts.
-		// This is not optimal (each different group of jurees will always be very similar), also if you
-		// create N accounts and enter the contract afterwards, you could easily get a huge lever in
-		// a juree if all of them are selected to be juree.
-		// This 'trick' is done mainly to reduce gas fee due to :
-		// 1) big computations (a random subarray needs a lot of permutation computations) and
-		// 2) multiple calls to Chainlik VRF to get multiple different indexes, we only us 1 call here.
-		//
-		// Next versions of this contract should get a better way to choose N different random users.
-
-
-		// before everything :  prevent another computation :
-		fund_state = FUND_STATE.COMPUTING_JUREES;
-
-		// FIRST STEP : Get a random number
-
-		bytes32 requestId = requestRandomness(keyHash, fee);
-		// emit to event to track it :
-		emit RequestedRandomness(requestId);
+	// 	// This function gets ONE random number from Chainlink VRF, converts it to an index number, from
+	// 	// then iterate to the N next adresses to get correct amount of accounts.
+	// 	// This is not optimal (each different group of jurees will always be very similar), also if you
+	// 	// create N accounts and enter the contract afterwards, you could easily get a huge lever in
+	// 	// a juree if all of them are selected to be juree.
+	// 	// This 'trick' is done mainly to reduce gas fee due to :
+	// 	// 1) big computations (a random subarray needs a lot of permutation computations) and
+	// 	// 2) multiple calls to Chainlik VRF to get multiple different indexes, we only us 1 call here.
+	// 	//
+	// 	// Next versions of this contract should get a better way to choose N different random users.
 
 
-    // SECOND STEP : get a random array of users
-    // delete jurees;
+	// 	// before everything :  prevent another computation :
+	// 	fund_state = FUND_STATE.COMPUTING_JUREES;
+
+	// 	// FIRST STEP : Get a random number
+
+	// 	bytes32 requestId = requestRandomness(keyHash, fee);
+	// 	// emit to event to track it :
+	// 	emit RequestedRandomness(requestId);
 
 
-
-    // final step : reopenn the possibility to create a new juree.
-    fund_state = FUND_STATE.READY;
-  }
+ //    // SECOND STEP : get a random array of users
+ //    // delete jurees;
 
 
 
-  function createAnNFTRequest() private {}
+ //    // final step : reopenn the possibility to create a new juree.
+ //    fund_state = FUND_STATE.READY;
+ //  }
 
 
   function checkIfIAmAJuree() public{
@@ -239,25 +240,26 @@ contract MutualFund is VRFConsumerBase, Ownable {
 
   function getOpenRequestsIndexes() public view returns(uint[] memory filteredRequestsIndexes){
 
-  	uint256[] storage index_of_open_requests;
-  	Request[] memory requestsTemp = new Request[](requests_number);
-  	uint256 count;
+  	// uint256[] storage index_of_open_requests;
+  	// Request[] memory requestsTemp = new Request[](requests_number);
+  	// uint256 count;
 
 
-  	for(uint256 i=0;i<requests_number;i++){
-  		if(request_mapping[i].state == REQUEST_STATE.OPEN){
-            requestsTemp[count] = request_mapping[i]; //or whatever you want to do if it matches
-            count += 1;
-      }
-  	}
+  	// for(uint256 i=0;i<requests_number;i++){
+  	// 	if(request_mapping[i].state == REQUEST_STATE.OPEN){
+   //          requestsTemp[count] = request_mapping[i]; //or whatever you want to do if it matches
+   //          count += 1;
+   //    }
+  	// }
 
-  	filteredRequestsIndexes = new uint256[](count);
-  	for(uint256 i = 0; i<count; i++){
-      filteredRequestsIndexes[i] = requestsTemp[i].index;
-    }
+  	// filteredRequestsIndexes = new uint256[](count);
+  	// for(uint256 i = 0; i<count; i++){
+   //    filteredRequestsIndexes[i] = requestsTemp[i].index;
+   //  }
 
-    // the following array contains the indexes of all the open requests :
+   //  // the following array contains the indexes of all the open requests :
   	return filteredRequestsIndexes;
+
   }
 
 
@@ -267,8 +269,8 @@ contract MutualFund is VRFConsumerBase, Ownable {
 
   	for(uint i=0;i<all_requests_array.length;i++){
 
-	  	for(uint j=0;j<FIXED_JUREE_NUMBER;j++){
-	  		if(address(all_requests_array[i].jurees[i]) == msg.sender){
+	  	for(uint j=0;j<5;j++){
+	  		if(address(all_requests_array[i].jury_members[i]) == msg.sender){
 	  			_answer = true;
 	  		}
 	  	}
