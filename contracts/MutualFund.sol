@@ -32,6 +32,7 @@ contract MutualFund is VRFConsumerBase, Ownable {
 	uint256 public randomness;
 
 
+
 	///////////////////////
 	// REQUEST VARIABLES //
 	///////////////////////
@@ -61,12 +62,17 @@ contract MutualFund is VRFConsumerBase, Ownable {
 
 	// store all requests :
 	Request[] public all_requests_array;
+	// using a mapping to easily filter Requests per STATE :
 	mapping(uint256 => Request) public request_mapping;
 	uint256 public requests_number;
 
 	// settings variables, modifiables by owner
 	uint256 public max_multiple = 10;
 	uint256 public jurees_number = 5;
+	uint256 public max_percentage_per_request = 1;
+	// for simplicity the juree's numbere is fixed :
+	uint256 public FIXED_JUREE_NUMBER = 5;
+	uint256[5] public fake_random_indexes_array = [ 2, 3, 5, 6, 8];
 
 	// VRF Settings
 	uint256 public fee;
@@ -94,6 +100,9 @@ contract MutualFund is VRFConsumerBase, Ownable {
 		fund_state = FUND_STATE.READY;
 	}
 
+
+
+
 	function enter() public payable {
 
 		// check if user is already in user's array AND balance is non zero :
@@ -106,13 +115,15 @@ contract MutualFund is VRFConsumerBase, Ownable {
 		userBalance[payable(msg.sender)] = msg.value;
 	}
 
-	function quit() public {
-		// just set mapping value to 0, cannot remove user from array
-	}
+	// function quit() public {
+	// 	// just set mapping value to 0, cannot remove user from array
+	// }
 
 	function payMonthlyFee() public payable{
 		userBalance[address(msg.sender)] = userBalance[address(msg.sender)] + msg.value;
 	}
+
+
 	function getTotalBalanceOfContract() public view returns(uint256){
 		// use a global variable updated at each transaction? To avoid huge computation
 		// at each call?
@@ -120,10 +131,25 @@ contract MutualFund is VRFConsumerBase, Ownable {
 	}
 
 
-	// REQUESTS MANAGEMENT
+	/////////////////////////
+	// REQUESTS MANAGEMENT //
+	/////////////////////////
 
 	function getMaxRequestAmount(address _userAddress) private view returns(uint256){
-		return userBalance[_userAddress]*max_multiple;
+
+		// returns max amount possible for a user it must be maximum equal to multiple*user_balance
+		// AND maximum equal to than 1% of Contract balance
+
+		uint256 maxAmount;
+		uint256 maxAmountAccordingToUserBalance = userBalance[_userAddress]*max_multiple;
+		uint256 maxAmountAccordingToContractBalance = (getTotalBalanceOfContract() * max_percentage_per_request)/100;
+
+		if(maxAmountAccordingToUserBalance > maxAmountAccordingToContractBalance){
+			return maxAmountAccordingToContractBalance;
+		}
+
+		return maxAmountAccordingToUserBalance;
+
 	}
 
 
@@ -217,7 +243,6 @@ contract MutualFund is VRFConsumerBase, Ownable {
   	uint256 count;
 
 
-
   	for(uint256 i=0;i<requests_number;i++){
   		if(request_mapping[i].state == REQUEST_STATE.OPEN){
             requestsTemp[count] = request_mapping[i]; //or whatever you want to do if it matches
@@ -229,9 +254,28 @@ contract MutualFund is VRFConsumerBase, Ownable {
   	for(uint256 i = 0; i<count; i++){
       filteredRequestsIndexes[i] = requestsTemp[i].index;
     }
+
+    // the following array contains the indexes of all the open requests :
   	return filteredRequestsIndexes;
   }
 
+
+  function checkIfUserBelongsToAJureeOfACertainRequest(uint256 _userAddress, uint256 _requestIndex) public view returns(bool _answer){
+
+  	_answer = false;
+
+  	for(uint i=0;i<all_requests_array.length;i++){
+
+	  	for(uint j=0;j<FIXED_JUREE_NUMBER;j++){
+	  		if(address(all_requests_array[i].jurees[i]) == msg.sender){
+	  			_answer = true;
+	  		}
+	  	}
+
+  	}
+
+  	return _answer;
+  }
 
 	/////////////
 	// SETTERS //
