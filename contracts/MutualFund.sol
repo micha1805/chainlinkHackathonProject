@@ -23,19 +23,11 @@ contract MutualFund is VRFConsumerBase, Ownable {
 	// to track the RNG behaviour :
 	event RequestedRandomness(bytes32 requestId);
 
-  // Address of all users
   address payable[] public users;
-	// balance of each user, defautl to 0 :
 	mapping(address => uint256) public userBalance; // in WEI
 
 	// random number written by chainlink VRF :
 	uint256 public randomness;
-
-
-
-	///////////////////////
-	// REQUEST VARIABLES //
-	///////////////////////
 
 	enum REQUEST_STATE {
 		OPEN,
@@ -44,8 +36,6 @@ contract MutualFund is VRFConsumerBase, Ownable {
 		ERROR
 	}
 
-
-	// custom type to store request info :
 	struct Request {
 		REQUEST_STATE state;
 		address payable[5] jury_members;
@@ -53,18 +43,10 @@ contract MutualFund is VRFConsumerBase, Ownable {
 		mapping(address => bool) hasVoted; // default is false : OK
 	}
 
-	// store all requests :
 	Request[] public all_requests_array;
 	// using a mapping to easily filter Requests per STATE :
 	mapping(uint256 => Request) public request_mapping;
 	uint256 public requests_number;
-
-	// settings variables, modifiables by owner
-	uint256 public max_multiple = 10;
-	uint256 public jurees_number = 5;
-	uint256 public max_percentage_per_request = 1;
-	// for simplicity the juree's numbere is fixed :
-	// uint256 public FIXED_JURY_MEMBERS_AMOUNT = 5;
 
 	// VRF Settings
 	uint256 public fee;
@@ -128,8 +110,8 @@ contract MutualFund is VRFConsumerBase, Ownable {
 		// AND maximum equal to than 1% of Contract balance
 
 		uint256 maxAmount;
-		uint256 maxAmountAccordingToUserBalance = userBalance[_userAddress]*max_multiple;
-		uint256 maxAmountAccordingToContractBalance = (getTotalBalanceOfContract() * max_percentage_per_request)/100;
+		uint256 maxAmountAccordingToUserBalance = userBalance[_userAddress]*10;
+		uint256 maxAmountAccordingToContractBalance = (getTotalBalanceOfContract() * 1)/100;
 
 		if(maxAmountAccordingToUserBalance > maxAmountAccordingToContractBalance){
 			return maxAmountAccordingToContractBalance;
@@ -161,11 +143,15 @@ contract MutualFund is VRFConsumerBase, Ownable {
 		jury_members = getJury_members();
 
 		// create a Request struct
-		Request memory newRequest;
+		Request storage newRequest;
 
 		newRequest.state = REQUEST_STATE.OPEN;
 		newRequest.jury_members = jury_members;
 
+		// fill the values for votes, nobody has voted by default :
+		for(uint256 i=0; i < 5; i++){
+			newRequest.hasVoted[newRequest.jury_members[i]] = false;
+		}
 		// create the nft (ideally)
 		// put it inside the requests array
 		all_requests_array.push(newRequest);
@@ -175,7 +161,7 @@ contract MutualFund is VRFConsumerBase, Ownable {
 
 
 
-	// function called bu chainlink VRF :
+	// function called by chainlink VRF :
 	function fulfillRandomness(bytes32 _requestId, uint256 _randomness)
 	internal
 	override
@@ -188,21 +174,21 @@ contract MutualFund is VRFConsumerBase, Ownable {
 	}
 
 
-  function checkIfUserBelongsToAJureeOfACertainRequest(uint256 _userAddress, uint256 _requestIndex) public view returns(bool _answer){
+  // function checkIfUserBelongsToAJureeOfACertainRequest(uint256 _userAddress, uint256 _requestIndex) public view returns(bool _answer){
 
-  	_answer = false;
+  // 	_answer = false;
 
-  	for(uint i=0;i<all_requests_array.length;i++){
+  // 	for(uint i=0;i<all_requests_array.length;i++){
 
-	  	for(uint j=0;j<5;j++){
-	  		if(address(all_requests_array[i].jury_members[i]) == msg.sender){
-	  			_answer = true;
-	  		}
-	  	}
+	 //  	for(uint j=0;j<5;j++){
+	 //  		if(address(all_requests_array[i].jury_members[i]) == msg.sender){
+	 //  			_answer = true;
+	 //  		}
+	 //  	}
 
-  	}
+  // 	}
 
-  	return _answer;
-  }
+  // 	return _answer;
+  // }
 
 }
