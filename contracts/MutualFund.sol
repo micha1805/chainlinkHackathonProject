@@ -53,8 +53,6 @@ contract MutualFund is VRFConsumerBase, Ownable {
 	bytes32 public keyHash;
 
 
-
-
 	///////////////
 	// FUNCTIONS //
 	///////////////
@@ -172,23 +170,4 @@ contract MutualFund is VRFConsumerBase, Ownable {
 
 
 	}
-
-
-  // function checkIfUserBelongsToAJureeOfACertainRequest(uint256 _userAddress, uint256 _requestIndex) public view returns(bool _answer){
-
-  // 	_answer = false;
-
-  // 	for(uint i=0;i<all_requests_array.length;i++){
-
-	 //  	for(uint j=0;j<5;j++){
-	 //  		if(address(all_requests_array[i].jury_members[i]) == msg.sender){
-	 //  			_answer = true;
-	 //  		}
-	 //  	}
-
-  // 	}
-
-  // 	return _answer;
-  // }
-
 }
