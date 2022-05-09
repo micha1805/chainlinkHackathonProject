@@ -160,12 +160,13 @@ contract MutualFund is VRFConsumerBase, Ownable {
 			"Contract is currently busy creating a juree, try later"
 			);
 
+		// create a random array of jury members.
+		// create a Request struct
+		// create the nft (ideally)
+		// put it inside the requests array
 
 		// DO STUFF
 	}
-
-	function getTotalContributionOfUser() public {}
-
 
 
 
