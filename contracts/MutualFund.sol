@@ -40,7 +40,8 @@ contract MutualFund is VRFConsumerBase, Ownable {
 		REQUEST_STATE state; // index 0
 		uint256 amount;// index 1
 		address requester; //index 2
-		// address payable[5] jury_members;
+		address payable[5] jury_members; // index 3
+		uint256 jury_members_array_size; // index 4
 		// // mapping to see if juree has voted :
 		// mapping(address => bool) hasVoted; // default is false : OK
 	}
@@ -126,14 +127,12 @@ contract MutualFund is VRFConsumerBase, Ownable {
 	}
 
 
-	// funciton is public for test purposes only, should be private:
+	// function is public for test purposes only, should be private:
 	function getJury_members() public returns(address payable[5] memory){
 		// hardcoded array of 5 elements, to begin with :
-		return [users[2], users[4], users[5], users[7], users[8]];
+		address payable[5] memory tmpArray = [users[2], users[4], users[5], users[7], users[8]];
+		return tmpArray;
 	}
-
-
-
 
 	function submitARequest(uint256 _amountRequested) public {
 		require(
@@ -150,11 +149,18 @@ contract MutualFund is VRFConsumerBase, Ownable {
 		// create a Request struct
 		Request storage newRequest;
 
+		for(uint256 i = 0; i<5;i++){
+			newRequest.jury_members[i] = jury_members[i];
+		}
+
 		newRequest.state = REQUEST_STATE.OPEN;
-		// newRequest.jury_members = jury_members;
 		// // the follwing should be checked before:
 		newRequest.amount = _amountRequested;
 		newRequest.requester = msg.sender;
+
+		for(uint i=0;i<5;i++){
+			newRequest.test_array[i] = i;
+		}
 
 		// // fill the values for votes, nobody has voted by default :
 		// for(uint256 i=0; i < 5; i++){
