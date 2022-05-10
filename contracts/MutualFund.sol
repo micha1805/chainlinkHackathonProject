@@ -39,6 +39,7 @@ contract MutualFund is VRFConsumerBase, Ownable {
 	struct Request {
 		REQUEST_STATE state; // index 0
 		uint256 amount;// index 1
+		address requester; //index 2
 		// address payable[5] jury_members;
 		// // mapping to see if juree has voted :
 		// mapping(address => bool) hasVoted; // default is false : OK
@@ -137,7 +138,7 @@ contract MutualFund is VRFConsumerBase, Ownable {
 	function submitARequest(uint256 _amountRequested) public {
 		require(
 			fund_state == FUND_STATE.READY,
-			"Contract is currently busy creating a juree, try later"
+			"Contract is currently busy building a set of jury members, try later"
 			);
 		// require(user is actually a user)
 
@@ -153,6 +154,7 @@ contract MutualFund is VRFConsumerBase, Ownable {
 		// newRequest.jury_members = jury_members;
 		// // the follwing should be checked before:
 		newRequest.amount = _amountRequested;
+		newRequest.requester = msg.sender;
 
 		// // fill the values for votes, nobody has voted by default :
 		// for(uint256 i=0; i < 5; i++){
@@ -185,5 +187,13 @@ contract MutualFund is VRFConsumerBase, Ownable {
 
 	function getUserNumbers() public view returns(uint256 count) {
 		return users.length;
+	}
+
+	////////////////////
+	// custom setters //
+	////////////////////
+
+	function setContractState(uint256 _newState) public onlyOwner {
+		fund_state = FUND_STATE(_newState);
 	}
 }
