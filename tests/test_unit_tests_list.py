@@ -10,7 +10,7 @@ from scripts.helpful_scripts import (
 # ## list of tests todo
 
 
-# IMPORTANT : to get struc value, you need to pass the index of the value to get it!!!!
+# IMPORTANT : to get a struct value, you need to pass the index of the value to get it!!!!
 
 
 # ## BACK
@@ -138,6 +138,19 @@ def test_can_get_a_random_array_of_jury_members():
 	# assert(len(jury_numbers) == 5)
 
 
+def test_user_cannot_submit_a_request_if_contract_is_busy():
+
+	owner = get_account()
+	mutual_fund = deploy_mutual_fund()
+	amount_requested = 123456789101
+
+	# set contract state to busy :
+	mutual_fund.setContractState(1, {"from": owner})
+
+	with pytest.raises(exceptions.VirtualMachineError):
+		mutual_fund.submitARequest(amount_requested, {"from": owner})
+
+
 def test_user_can_submit_a_request():
 
 	owner = get_account()
@@ -163,6 +176,13 @@ def test_user_can_submit_a_request():
 
 	# test if request amount is correct: index 1 is the amount requested
 	assert(mutual_fund.all_requests_array(0)[1] == amount_requested)
+
+def test_owner_can_set_contract_state():
+	owner = get_account()
+	mutual_fund = deploy_mutual_fund()
+
+	mutual_fund.setContractState(1, {"from": owner})
+	assert(mutual_fund.fund_state() == 1)
 
 def test_check_request():
 	pass
