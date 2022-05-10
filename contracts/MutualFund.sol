@@ -23,7 +23,7 @@ contract MutualFund is VRFConsumerBase, Ownable {
 	// to track the RNG behaviour :
 	event RequestedRandomness(bytes32 requestId);
 
-  address payable[] public users;
+	address payable[] public users;
 	mapping(address => uint256) public userBalance; // in WEI
 
 	// random number written by chainlink VRF :
@@ -37,16 +37,18 @@ contract MutualFund is VRFConsumerBase, Ownable {
 	}
 
 	struct Request {
-		REQUEST_STATE state;
-		address payable[5] jury_members;
-		// mapping to see if juree has voted :
-		mapping(address => bool) hasVoted; // default is false : OK
+		REQUEST_STATE state; // index 0
+		uint256 amount;// index 1
+		// address payable[5] jury_members;
+		// // mapping to see if juree has voted :
+		// mapping(address => bool) hasVoted; // default is false : OK
 	}
 
 	Request[] public all_requests_array;
 	// using a mapping to easily filter Requests per STATE :
 	mapping(uint256 => Request) public request_mapping;
 	uint256 public requests_number;
+	Request public testRequest;
 
 	// VRF Settings
 	uint256 public fee;
@@ -70,6 +72,9 @@ contract MutualFund is VRFConsumerBase, Ownable {
 		fee = _fee;
 		keyHash = _keyHash;
 		fund_state = FUND_STATE.READY;
+
+		testRequest.state = REQUEST_STATE.OPEN;
+		testRequest.amount = 6789;
 	}
 
 
@@ -120,8 +125,8 @@ contract MutualFund is VRFConsumerBase, Ownable {
 	}
 
 
-
-	function getJury_members() private returns(address payable[5] memory){
+	// funciton is public for test purposes only, should be private:
+	function getJury_members() public returns(address payable[5] memory){
 		// hardcoded array of 5 elements, to begin with :
 		return [users[2], users[4], users[5], users[7], users[8]];
 	}
@@ -129,11 +134,12 @@ contract MutualFund is VRFConsumerBase, Ownable {
 
 
 
-	function submitARequest() public {
+	function submitARequest(uint256 _amountRequested) public {
 		require(
 			fund_state == FUND_STATE.READY,
 			"Contract is currently busy creating a juree, try later"
 			);
+		// require(user is actually a user)
 
 
 		// create a random array of jury members.
@@ -144,13 +150,15 @@ contract MutualFund is VRFConsumerBase, Ownable {
 		Request storage newRequest;
 
 		newRequest.state = REQUEST_STATE.OPEN;
-		newRequest.jury_members = jury_members;
+		// newRequest.jury_members = jury_members;
+		// // the follwing should be checked before:
+		newRequest.amount = _amountRequested;
 
-		// fill the values for votes, nobody has voted by default :
-		for(uint256 i=0; i < 5; i++){
-			newRequest.hasVoted[newRequest.jury_members[i]] = false;
-		}
-		// create the nft (ideally)
+		// // fill the values for votes, nobody has voted by default :
+		// for(uint256 i=0; i < 5; i++){
+		// 	newRequest.hasVoted[newRequest.jury_members[i]] = false;
+		// }
+		// // create the nft (ideally)
 		// put it inside the requests array
 		all_requests_array.push(newRequest);
 
@@ -169,5 +177,13 @@ contract MutualFund is VRFConsumerBase, Ownable {
 		randomness = _randomness;
 
 
+	}
+
+	////////////////////
+	// custom getters //
+	////////////////////
+
+	function getUserNumbers() public view returns(uint256 count) {
+		return users.length;
 	}
 }
