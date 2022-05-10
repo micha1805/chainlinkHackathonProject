@@ -10,6 +10,8 @@ from scripts.helpful_scripts import (
 # ## list of tests todo
 
 
+# IMPORTANT : to get struc value, you need to pass the index of the value to get it!!!!
+
 
 # ## BACK
 
@@ -142,9 +144,25 @@ def test_user_can_submit_a_request():
 	number_of_users = 9
 	mutual_fund = deploy_mutual_fund(totalUsers=number_of_users+1)
 
-	mutual_fund.submitARequest(123456789101, {"from": owner})
-	print(f"First request : {mutual_fund.all_requests_array(0)}")
+	request_state =  {
+		0: "OPEN",
+		1: "ACCEPTED",
+		2: "REFUSED",
+		3: "ERROR"
+	}
+
+	amount_requested = 123456789101
+	mutual_fund.submitARequest(amount_requested, {"from": owner})
+	print(f"First request\n State : {request_state[mutual_fund.all_requests_array(0)[0]]}\n Amount : {mutual_fund.all_requests_array(0)[1]}")
+
+	# test if the array contains something :
 	assert(mutual_fund.all_requests_array(0) != None)
+
+	# test if request is open : index 0 is 0
+	assert(mutual_fund.all_requests_array(0)[0] == 0)
+
+	# test if request amount is correct: index 1 is the amount requested
+	assert(mutual_fund.all_requests_array(0)[1] == amount_requested)
 
 def test_check_request():
 	pass
