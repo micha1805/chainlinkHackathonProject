@@ -143,24 +143,27 @@ contract MutualFund is VRFConsumerBase, Ownable {
 
 
 		// create a random array of jury members.
-		address payable[5] memory jury_members;
-		jury_members = getJury_members();
+		address payable[5] memory tmp_jury_members;
+		tmp_jury_members = getJury_members();
 
 		// create a Request struct
-		Request storage newRequest;
+		Request memory newRequest;
 
-		for(uint256 i = 0; i<5;i++){
-			newRequest.jury_members[i] = jury_members[i];
-		}
 
 		newRequest.state = REQUEST_STATE.OPEN;
 		// // the follwing should be checked before:
 		newRequest.amount = _amountRequested;
 		newRequest.requester = msg.sender;
 
-		for(uint i=0;i<5;i++){
-			newRequest.test_array[i] = i;
+		all_requests_array.push(newRequest);
+
+		uint all_requests_array_last_index = all_requests_array.length - 1;
+
+
+		for(uint256 i = 0; i<5;i++){
+			all_requests_array[all_requests_array_last_index].jury_members[i] = tmp_jury_members[i];
 		}
+
 
 		// // fill the values for votes, nobody has voted by default :
 		// for(uint256 i=0; i < 5; i++){
@@ -194,6 +197,15 @@ contract MutualFund is VRFConsumerBase, Ownable {
 	function getUserNumbers() public view returns(uint256 count) {
 		return users.length;
 	}
+
+  function getArrayOfJuryMembers(uint256 _index) public view returns(address payable[5] memory juryMembersArray){
+
+  	Request memory tmp_request;
+  	tmp_request = all_requests_array[_index];
+		juryMembersArray = tmp_request.jury_members;
+
+  	return juryMembersArray;
+  }
 
 	////////////////////
 	// custom setters //

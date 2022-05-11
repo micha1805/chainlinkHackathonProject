@@ -192,8 +192,22 @@ def test_user_can_submit_a_request():
 	# test if requester is recorded in the request
 	# assert(mutual_fund.all_requests_array(0)[2] == owner.address)
 
+def test_an_array_of_jury_members_is_created_inside_the_request():
+
+	owner = get_account()
+	number_of_users = 9
+	mutual_fund = deploy_mutual_fund(totalUsers=number_of_users+1)
+
+	amount_requested = 123456789101
+	mutual_fund.submitARequest(amount_requested, {"from": owner})
 
 
+	last_request = mutual_fund.all_requests_array(0)
+	last_request_jury_members_array = mutual_fund.getArrayOfJuryMembers(0)
+
+	print(f"last_request : {last_request}")
+	print(f"last_request_jury_members_array : {last_request_jury_members_array}")
+	# print(f"last_request address 3 : {last_request_address3}")
 
 
 def test_owner_can_set_contract_state():
