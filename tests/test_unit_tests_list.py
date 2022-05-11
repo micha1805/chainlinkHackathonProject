@@ -48,6 +48,7 @@ def test_a_user_can_enter_contract():
 
 	# create a random user
 	random_user = get_account(2)
+	random_user2 = get_account(3)
 
 
 	# attempt to enter the contract :
@@ -55,6 +56,44 @@ def test_a_user_can_enter_contract():
 
 	# get user frome the array :
 	assert( mutual_fund.users(0) == random_user)
+	assert(mutual_fund.userIsPresent(random_user) == True)
+	assert(mutual_fund.userIsPresent(random_user2) == False)
+
+def test_a_user_cannot_enter_twice():
+	if network.show_active() not in LOCAL_BLOCKCHAIN_ENVIRONMENTS:
+	   pytest.skip("Only for local environnment testing")
+
+	# create contract and owner
+	indexAccount = 0
+	owner = get_account(indexAccount)
+	mutual_fund = deploy_mutual_fund(index=indexAccount)
+
+	# create a random user
+	random_user = get_account(2)
+
+	# attempt to enter the contract :
+	mutual_fund.enter({"from": random_user})
+
+	with pytest.raises(exceptions.VirtualMachineError):
+		mutual_fund.enter({"from": random_user})
+
+
+
+def test_a_user_not_belonging_to_the_contract_cannot_submit_a_request():
+
+	if network.show_active() not in LOCAL_BLOCKCHAIN_ENVIRONMENTS:
+	   pytest.skip("Only for local environnment testing")
+
+	# create contract and owner
+	indexAccount = 0
+	owner = get_account(indexAccount)
+	mutual_fund = deploy_mutual_fund(index=indexAccount)
+
+	# create a random user
+	random_user = get_account(2)
+
+	with pytest.raises(exceptions.VirtualMachineError):
+		mutual_fund.submitARequest(1234, {"from": random_user})
 
 
 
@@ -84,44 +123,9 @@ def test_a_user_can_pay_while_entering_contract():
 	assert( mutual_fund.users(1) == random_user2)
 	assert( mutual_fund.balance() == TICKET_VALUE*2)
 
-# The owner can change settings
-# def test_owner_can_change_settings():
-# 	if network.show_active() not in LOCAL_BLOCKCHAIN_ENVIRONMENTS:
-# 		pytest.skip()
-# 	# create contract, owner and simple user
-# 	indexAccount = 0
-# 	owner = get_account(0)
-# 	simple_user = get_account(1)
-# 	mutual_fund = deploy_mutual_fund(index=indexAccount)
-# 	# change settings
-# 	new_jurees_number = 33
-# 	new_multiple = 6
-# 	mutual_fund.modifyJureesNumber(new_jurees_number, {"from": owner})
-# 	mutual_fund.modifyMultiple(new_multiple, {"from": owner})
-# 	assert(mutual_fund.jurees_number() == new_jurees_number)
-# 	assert(mutual_fund.max_multiple() == new_multiple)
-
-
-# Non owner cannot change settings
-# def test_simple_user_cannot_change_settings():
-# 	if network.show_active() not in LOCAL_BLOCKCHAIN_ENVIRONMENTS:
-# 		pytest.skip()
-# 	# change settings
-# 	new_jurees_number = 33
-# 	new_multiple = 6
-# 	# create contract, owner and simple user
-# 	indexAccount = 0
-# 	owner = get_account(0)
-# 	simple_user = get_account(1)
-# 	mutual_fund = deploy_mutual_fund(index=indexAccount)
-# 	with pytest.raises(exceptions.VirtualMachineError):
-# 		mutual_fund.modifyJureesNumber(new_jurees_number, {"from": simple_user})
-# 	with pytest.raises(exceptions.VirtualMachineError):
-# 		mutual_fund.modifyMultiple(new_multiple, {"from": simple_user})
-
 
 # test deploy script
-def test_deploy_scripts():
+def test_can_deploy_contract():
 	mutual_fund = deploy_mutual_fund()
 
 	assert(mutual_fund)
@@ -154,6 +158,7 @@ def test_user_cannot_submit_a_request_if_contract_is_busy():
 def test_user_can_submit_a_request():
 
 	owner = get_account()
+	user = get_account(1)
 	number_of_users = 9
 	mutual_fund = deploy_mutual_fund(totalUsers=number_of_users+1)
 
@@ -165,20 +170,8 @@ def test_user_can_submit_a_request():
 	}
 
 	amount_requested = 123456789101
-	mutual_fund.submitARequest(amount_requested, {"from": owner})
+	mutual_fund.submitARequest(amount_requested, {"from": user})
 	print(f"First request\n State : {request_state[mutual_fund.all_requests_array(0)[0]]}\n Amount : {mutual_fund.all_requests_array(0)[1]}\n Requester : {mutual_fund.all_requests_array(0)[2]}")
-
-	print(f"\n\nRequest raw :  {mutual_fund.all_requests_array(0)}")
-	print(f"\n\nRequest test array :  {mutual_fund.all_requests_array(0)[3][2]}")
-
-
-
-
-	# print(f"Array of jury members : {mutual_fund.all_requests_array(0)[3]}")
-
-
-
-
 
 	# test if the array contains something :
 	assert(mutual_fund.all_requests_array(0) != None)
@@ -187,28 +180,46 @@ def test_user_can_submit_a_request():
 	assert(mutual_fund.all_requests_array(0)[0] == 0)
 
 	# test if request amount is correct: index 1 is the amount requested
-	# assert(mutual_fund.all_requests_array(0)[1] == amount_requested)
+	assert(mutual_fund.all_requests_array(0)[1] == amount_requested)
 
 	# test if requester is recorded in the request
-	# assert(mutual_fund.all_requests_array(0)[2] == owner.address)
+	assert(mutual_fund.all_requests_array(0)[2] == user.address)
 
 def test_an_array_of_jury_members_is_created_inside_the_request():
 
-	owner = get_account()
+	######################################
+	# IMPORTANT : HARDCODED JURY TEST !! #
+	######################################
+
+	user = get_account(1)
 	number_of_users = 9
 	mutual_fund = deploy_mutual_fund(totalUsers=number_of_users+1)
 
 	amount_requested = 123456789101
-	mutual_fund.submitARequest(amount_requested, {"from": owner})
+	mutual_fund.submitARequest(amount_requested, {"from": user})
 
 
 	last_request = mutual_fund.all_requests_array(0)
 	last_request_jury_members_array = mutual_fund.getArrayOfJuryMembers(0)
 
+
+
+	# for now it is hardcoded that the jury is made of the following users :
+	# [users[2], users[4], users[5], users[7], users[8]]
+	# everything is translated because the first one is the owner :
+
+	jury_member1 = get_account(2 + 1).address
+	jury_member2 = get_account(4 + 1).address
+	jury_member3 = get_account(5 + 1).address
+	jury_member4 = get_account(7 + 1).address
+	jury_member5 = get_account(8 + 1).address
+
+	jury_members_list = [jury_member1, jury_member2, jury_member3, jury_member4, jury_member5]
+
 	print(f"last_request : {last_request}")
 	print(f"last_request_jury_members_array : {last_request_jury_members_array}")
-	# print(f"last_request address 3 : {last_request_address3}")
-
+	print(f"Jury members from brownie accounts : {jury_members_list}")
+	assert(last_request_jury_members_array == jury_members_list)
 
 def test_owner_can_set_contract_state():
 	owner = get_account()
@@ -216,6 +227,23 @@ def test_owner_can_set_contract_state():
 
 	mutual_fund.setContractState(1, {"from": owner})
 	assert(mutual_fund.fund_state() == 1)
+
+
+
+# def test_a_jury_member_can_vote():
+# 	owner = get_account()
+# 	number_of_users = 9
+
+# 	mutual_fund = deploy_mutual_fund(totalUsers=number_of_users+1)
+
+# 	mutual_fund.submitARequest(amount_requested, {"from": owner})
+
+	# for now it is hardcoded that the jury is the following users :
+	# [users[2], users[4], users[5], users[7], users[8]]
+
+
+
+
 
 def test_check_request():
 	pass
