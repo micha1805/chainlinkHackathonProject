@@ -219,7 +219,21 @@ def test_an_array_of_jury_members_is_created_inside_the_request():
 	print(f"last_request : {last_request}")
 	print(f"last_request_jury_members_array : {last_request_jury_members_array}")
 	print(f"Jury members from brownie accounts : {jury_members_list}")
+	# check the whole array :
 	assert(last_request_jury_members_array == jury_members_list)
+
+
+	# check an individual address
+	contract_check_value1 = mutual_fund.checkIfUserIsAJuryMember(0, jury_member5, {"from": user})
+
+	non_jury_member = get_account(0).address
+	contract_check_value2 = mutual_fund.checkIfUserIsAJuryMember(0, non_jury_member, {"from": user})
+
+	# first user should be a jury member:
+	assert(contract_check_value1)
+	# second one not:
+	assert(contract_check_value2 == False)
+
 
 def test_owner_can_set_contract_state():
 	owner = get_account()
