@@ -7,27 +7,15 @@ import "@chainlink/contracts/src/v0.6/VRFConsumerBase.sol";
 
 contract MutualFund is VRFConsumerBase, Ownable {
 
-
-
 	///////////////////////////
 	// VARIABLES DECLARATION //
 	///////////////////////////
 
+	// custom data types
 	enum FUND_STATE {
 		READY,
 		COMPUTING_JUREES // to prevent 2 calls at the same time
 	}
-
-	FUND_STATE public fund_state;
-
-	// to track the RNG behaviour :
-	event RequestedRandomness(bytes32 requestId);
-
-	address payable[] public users;
-	mapping(address => uint256) public userBalance; // in WEI
-
-	// random number written by chainlink VRF :
-	uint256 public randomness;
 
 	enum REQUEST_STATE {
 		OPEN,
@@ -43,18 +31,33 @@ contract MutualFund is VRFConsumerBase, Ownable {
 		address payable[5] jury_members; // index 3
 		uint256 jury_members_array_size; // index 4
 		// // mapping to see if juree has voted :
-		// mapping(address => bool) hasVoted; // default is false : OK
+		mapping(address => bool) hasVoted; // default is false : OK
 	}
 
-	Request[] public all_requests_array;
-	// using a mapping to easily filter Requests per STATE :
-	mapping(uint256 => Request) public request_mapping;
-	uint256 public requests_number;
-	Request public testRequest;
 
-	// VRF Settings
+	// contract itself
+	FUND_STATE public fund_state;
+
+
+	// users
+	address payable[] public users;
+	mapping(address => bool) public userIsPresent; // to quickly check if msg.sender is already a user
+	mapping(address => uint256) public userBalance; // in WEI
+
+
+	// requests
+	Request[] public all_requests_array;
+	mapping(uint256 => Request) public request_mapping; // to easily filter Requests per STATE
+	uint256 public requests_number;
+
+	// // VRF Settings
 	uint256 public fee;
 	bytes32 public keyHash;
+	event RequestedRandomness(bytes32 requestId);
+	uint256 public randomness;
+
+
+
 
 
 	///////////////
@@ -70,13 +73,14 @@ contract MutualFund is VRFConsumerBase, Ownable {
 		uint256 _fee,
 		bytes32 _keyHash
 		) public VRFConsumerBase(_vrfCoordinator, _link){
-		// owner = msg.sender;
+
+		// VRF Settings
 		fee = _fee;
 		keyHash = _keyHash;
+
+		// Set contract state
 		fund_state = FUND_STATE.READY;
 
-		testRequest.state = REQUEST_STATE.OPEN;
-		testRequest.amount = 6789;
 	}
 
 
@@ -84,13 +88,13 @@ contract MutualFund is VRFConsumerBase, Ownable {
 
 	function enter() public payable {
 
-		// check if user is already in user's array AND balance is non zero :
-	  // require(msg.value >= getEntranceFee(), "User already");
+		// prevent duplicates :
+		require( userIsPresent[msg.sender] == false, "User is already present in the Fund");
 
-		// add user to user list:
 		users.push(payable(msg.sender));
-		// set his balance to
+		userIsPresent[msg.sender] = true;
 		userBalance[payable(msg.sender)] = msg.value;
+
 	}
 
 	function payMonthlyFee() public payable{
@@ -99,15 +103,13 @@ contract MutualFund is VRFConsumerBase, Ownable {
 
 
 	function getTotalBalanceOfContract() public view returns(uint256){
-		// use a global variable updated at each transaction? To avoid huge computation
-		// at each call?
 		return address(this).balance;
 	}
 
 
-	/////////////////////////
-	// REQUESTS MANAGEMENT //
-	/////////////////////////
+	///////////////
+	// REQUESTS  //
+	///////////////
 
 	function getMaxRequestAmount(address _userAddress) private view returns(uint256){
 
@@ -134,45 +136,40 @@ contract MutualFund is VRFConsumerBase, Ownable {
 		return tmpArray;
 	}
 
+	// submit a request
 	function submitARequest(uint256 _amountRequested) public {
+
 		require(
 			fund_state == FUND_STATE.READY,
 			"Contract is currently busy building a set of jury members, try later"
 			);
-		// require(user is actually a user)
+		require(
+			userIsPresent[msg.sender] == true,
+			"User must enter the contract first"
+			);
 
+		Request memory newRequest;
 
 		// create a random array of jury members.
 		address payable[5] memory tmp_jury_members;
 		tmp_jury_members = getJury_members();
 
-		// create a Request struct
-		Request memory newRequest;
 
-
+		// fill in the tmp request and push it to the global array:
 		newRequest.state = REQUEST_STATE.OPEN;
-		// // the follwing should be checked before:
 		newRequest.amount = _amountRequested;
 		newRequest.requester = msg.sender;
 
 		all_requests_array.push(newRequest);
 
+		// get index of current request
 		uint all_requests_array_last_index = all_requests_array.length - 1;
 
-
+		// fill in the jury members array INSIDE the global array of request, couldn't make it work using
+		// the tmp request here above.
 		for(uint256 i = 0; i<5;i++){
 			all_requests_array[all_requests_array_last_index].jury_members[i] = tmp_jury_members[i];
 		}
-
-
-		// // fill the values for votes, nobody has voted by default :
-		// for(uint256 i=0; i < 5; i++){
-		// 	newRequest.hasVoted[newRequest.jury_members[i]] = false;
-		// }
-		// // create the nft (ideally)
-		// put it inside the requests array
-		all_requests_array.push(newRequest);
-
 
 	}
 
