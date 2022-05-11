@@ -29,9 +29,12 @@ contract MutualFund is VRFConsumerBase, Ownable {
 		uint256 amount;// index 1
 		address requester; //index 2
 		address payable[5] jury_members; // index 3
-		uint256 jury_members_array_size; // index 4
+		mapping(address => bool) user_is_a_jury_member; //index 4
+		uint256 jury_members_array_size; // index 5
 		// // mapping to see if juree has voted :
-		mapping(address => bool) hasVoted; // default is false : OK
+		mapping(address => bool) hasVoted; // default is false : OK // index 6
+		uint256 voteTotal; // every jury member increment this for a yes vote // index 7
+		uint256 voteCount; // when this goes to 5 everybody has voted // index 8
 	}
 
 
@@ -169,10 +172,62 @@ contract MutualFund is VRFConsumerBase, Ownable {
 		// the tmp request here above.
 		for(uint256 i = 0; i<5;i++){
 			all_requests_array[all_requests_array_last_index].jury_members[i] = tmp_jury_members[i];
+			all_requests_array[all_requests_array_last_index].user_is_a_jury_member[tmp_jury_members[i]] = true;
 		}
 
 	}
 
+
+	// // check the status of request to see if everybody has voted
+	// function checkRequestStatus(uint256 _requestIndex) public {
+
+
+	// }
+
+	// vote for a request
+	function voteForARequest(uint _requestIndex, bool _vote) public{
+
+		// must be a jury member:
+		require(checkIfUserIsAJuryMember(_requestIndex, msg.sender), "You must be a jury member for that request");
+		// cannot vote twice:
+		require(all_requests_array[_requestIndex].hasVoted[msg.sender] = false, "you have already voted");
+
+		// record the vote has been made:
+		all_requests_array[_requestIndex].hasVoted[msg.sender] = true;
+
+		// increment the vote total result if needed:
+		if(!_vote){
+			uint256 currentTotalVote = all_requests_array[_requestIndex].voteTotal;
+			all_requests_array[_requestIndex].voteTotal = currentTotalVote + 1;
+		}
+
+		// increment the value tracking the number of votes already made :
+		uint256 currentVoteCount = all_requests_array[_requestIndex].voteCount;
+		all_requests_array[_requestIndex].voteCount = currentVoteCount + 1;
+
+
+		// check if everybody has voted
+		// checkRequestStatus(_requestIndex);
+		if(all_requests_array[_requestIndex].voteCount == 5){
+				// everybody has voted
+				// check the result
+				// send the money of needed
+				if(all_requests_array[_requestIndex].voteTotal > 2){
+					// send the money
+					address payable requesterAddress = payable(all_requests_array[_requestIndex].requester);
+					uint256 amountToTransfer = all_requests_array[_requestIndex].amount;
+					requesterAddress.transfer(amountToTransfer);
+					// Set the status to accepted
+					all_requests_array[_requestIndex].state = REQUEST_STATE.ACCEPTED;
+
+				}
+
+				// set status to REFUSED
+				all_requests_array[_requestIndex].state = REQUEST_STATE.REFUSED;
+			}
+
+
+	}
 
 
 	// function called by chainlink VRF :
@@ -202,6 +257,10 @@ contract MutualFund is VRFConsumerBase, Ownable {
 		juryMembersArray = tmp_request.jury_members;
 
   	return juryMembersArray;
+  }
+
+  function checkIfUserIsAJuryMember(uint256 _requestIndex, address _addresToCheck) public view returns(bool){
+  	return all_requests_array[_requestIndex].user_is_a_jury_member[_addresToCheck];
   }
 
 	////////////////////
