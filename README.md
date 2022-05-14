@@ -9,6 +9,12 @@ Anyone can enter the fund and request a sum under some conditions.
 
 
 
+
+
+## How does it work?
+
+Insert an image / graph showing the contract, the users, the jury member, what they can do.
+
 ## User stories
 
 - A user needs to pay a monthly fee, anything greater than 0, the value is still important because it sets the amount that can be requested if needed. If the total contribition is very small, then the amount requestable is smaller too. The
