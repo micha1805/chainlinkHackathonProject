@@ -216,13 +216,17 @@ contract MutualFund is VRFConsumerBase, Ownable {
 				// check the result
 				// send the money of needed
 				if(all_requests_array[_requestIndex].voteTotal > 2){
+					// first set the request state to ERROR, such that if the transfer
+					// reverts afterwards in the transfer, the state is already correct;
+					all_requests_array[_requestIndex].state = REQUEST_STATE.ERROR;
 					// send the money
 					address payable requesterAddress = payable(all_requests_array[_requestIndex].requester);
 					uint256 amountToTransfer = all_requests_array[_requestIndex].amount;
 					// Set the status to accepted
-					all_requests_array[_requestIndex].state = REQUEST_STATE.ACCEPTED;
 					// transfer money:
 					requesterAddress.transfer(amountToTransfer);
+					// if the above suceeds, then change the request to correct state :
+					all_requests_array[_requestIndex].state = REQUEST_STATE.ACCEPTED;
 
 				}else{
 					// set status to REFUSED
