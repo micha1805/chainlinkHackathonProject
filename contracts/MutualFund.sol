@@ -190,7 +190,7 @@ contract MutualFund is VRFConsumerBase, Ownable {
 		// must be a jury member:
 		require(checkIfUserIsAJuryMember(_requestIndex, msg.sender), "You must be a jury member for that request");
 		// cannot vote twice:
-		require(all_requests_array[_requestIndex].hasVoted[msg.sender] = false, "you have already voted");
+		require(all_requests_array[_requestIndex].hasVoted[msg.sender] = true, "you have already voted");
 
 		// record the vote has been made:
 		all_requests_array[_requestIndex].hasVoted[msg.sender] = true;
@@ -261,6 +261,10 @@ contract MutualFund is VRFConsumerBase, Ownable {
 
   function checkIfUserIsAJuryMember(uint256 _requestIndex, address _addresToCheck) public view returns(bool){
   	return all_requests_array[_requestIndex].user_is_a_jury_member[_addresToCheck];
+  }
+
+  function checkIfJuryMemberHasVoted(uint256 _requestIndex, address _juryMember) public view returns(bool){
+  	return all_requests_array[_requestIndex].hasVoted[_juryMember];
   }
 
 	////////////////////
