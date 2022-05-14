@@ -50,9 +50,11 @@ def deploy_mutual_fund(index=None, totalUsers=1):
 	number_of_users = totalUsers - 1 # -1 because we alreadu have an owner
 	my_integer_list = list(range(number_of_users))
 
+	value_to_send_to_contract_per_user = web3.toWei(10, "ether")
+
 	for i in my_integer_list:
 		new_account = get_account(index=i+1)
-		mutual_fund.enter({"from": new_account})
+		mutual_fund.enter({"value": value_to_send_to_contract_per_user, "from": new_account})
 
 
 	print(f"Deployed Mutual Fund contract with 1 owner and {number_of_users} other users")
