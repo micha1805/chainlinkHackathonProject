@@ -187,6 +187,9 @@ contract MutualFund is VRFConsumerBase, Ownable {
 	// vote for a request
 	function voteForARequest(uint _requestIndex, bool _vote) public{
 
+		// request mu be open
+		require(all_requests_array[_requestIndex].state == REQUEST_STATE.OPEN, "request is closed");
+
 		// must be a jury member:
 		require(checkIfUserIsAJuryMember(_requestIndex, msg.sender), "You must be a jury member for that request");
 		// cannot vote twice:
@@ -216,15 +219,15 @@ contract MutualFund is VRFConsumerBase, Ownable {
 					// send the money
 					address payable requesterAddress = payable(all_requests_array[_requestIndex].requester);
 					uint256 amountToTransfer = all_requests_array[_requestIndex].amount;
-					// transfer money:
-					// requesterAddress.transfer(amountToTransfer);
 					// Set the status to accepted
 					all_requests_array[_requestIndex].state = REQUEST_STATE.ACCEPTED;
+					// transfer money:
+					requesterAddress.transfer(amountToTransfer);
 
+				}else{
+					// set status to REFUSED
+					all_requests_array[_requestIndex].state = REQUEST_STATE.REFUSED;
 				}
-
-				// set status to REFUSED
-				all_requests_array[_requestIndex].state = REQUEST_STATE.REFUSED;
 			}
 
 
@@ -274,6 +277,11 @@ contract MutualFund is VRFConsumerBase, Ownable {
 
   function getVoteTotalOfRequest(uint256 _requestIndex) public view returns(uint256){
   	return all_requests_array[_requestIndex].voteTotal;
+  }
+
+  function getRequestStateAsNumber(uint256 _requestIndex) public view returns(uint256){
+
+  	return uint256(all_requests_array[_requestIndex].state);
   }
 
 	////////////////////
