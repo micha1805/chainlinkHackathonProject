@@ -1,4 +1,4 @@
-from brownie import accounts, network, MutualFund, exceptions
+from brownie import accounts, network, MutualFund, exceptions, web3
 import pytest
 from scripts.helpful_scripts import (
 	LOCAL_BLOCKCHAIN_ENVIRONMENTS,
@@ -393,15 +393,56 @@ def test_check_the_values_tracking_the_votes():
 	total_vote = mutual_fund.getVoteTotalOfRequest(0)
 
 	last_request = mutual_fund.all_requests_array(0, {"from": owner})
+	contract_balance_in_wei = mutual_fund.balance()
+	contract_balance_in_eth = web3.fromWei(contract_balance_in_wei , "ether")
 
 	print(jury_members)
 	print(f"Request : {last_request}")
 	print(f"voteCount = {votes_incrementation}")
 	print(f"voteTotal = {total_vote}")
+	print(f"Contract balance : {contract_balance_in_eth} ETH")
 
 	assert(votes_incrementation == 5)
 	assert(total_vote == 5)
 
+
+
+def test_check_if_money_is_transfered():
+
+	owner = get_account()
+	number_of_users = 9
+
+	requester = get_account(1)
+	amount_requested = 999999
+
+	mutual_fund = deploy_mutual_fund(totalUsers=number_of_users+1)
+
+	mutual_fund.submitARequest(amount_requested, {"from": requester})
+
+	requester_balance_before_transfer = requester.balance()
+	contract_balance_before_transfer = mutual_fund.balance()
+
+	# print(f"request balance before transfer : {requester_balance_before_transfer}")
+
+	# Get the jury members
+	jury_members = mutual_fund.getArrayOfJuryMembers(0)
+
+	# make all the jury members vote YES :
+	for jury_member in jury_members:
+		mutual_fund.voteForARequest(0, True, {"from": jury_member})
+
+	requester_balance_after_transfer = requester.balance()
+	contract_balance_after_transfer = mutual_fund.balance()
+	difference_in_requester_balance = requester_balance_after_transfer - requester_balance_before_transfer
+	difference_in_contract_balance = contract_balance_after_transfer - contract_balance_before_transfer
+
+	# print(f'requester balance before tranfsfer: {requester_balance_before_transfer}')
+	# print(f'requester balance after tranfsfer: {requester_balance_after_transfer}')
+	# print(f'contract balance before tranfsfer: {contract_balance_before_transfer}')
+	# print(f'contract balance after tranfsfer: {contract_balance_after_transfer}')
+
+	assert(difference_in_contract_balance ==  (0 - amount_requested))
+	assert(difference_in_requester_balance == amount_requested)
 
 def test_check_request():
 	pass
