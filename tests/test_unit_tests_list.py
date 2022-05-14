@@ -208,6 +208,12 @@ def test_an_array_of_jury_members_is_created_inside_the_request():
 	# [users[2], users[4], users[5], users[7], users[8]]
 	# everything is translated because the first one is the owner :
 
+	# IMPORTANT:
+	############
+	#
+	# get these jury members from the function that gives the jury, to avoid bugs when
+	# testing with a non-hardcoded array
+
 	jury_member1 = get_account(2 + 1).address
 	jury_member2 = get_account(4 + 1).address
 	jury_member3 = get_account(5 + 1).address
@@ -243,14 +249,67 @@ def test_owner_can_set_contract_state():
 	assert(mutual_fund.fund_state() == 1)
 
 
+def test_a_non_jury_member_cannot_vote():
 
-# def test_a_jury_member_can_vote():
-# 	owner = get_account()
-# 	number_of_users = 9
+	# create the owner
+	owner = get_account()
+	# create a random user NOT in the hardcoded jury:
+	user = get_account(1)
+	# create a user IN the hardcoded jury:
+	userJury = get_account(3)
+	# the hardcoded jury goes to 9, so we need at least 9 users:
+	number_of_users = 9
+	# deploy contract
+	mutual_fund = deploy_mutual_fund(totalUsers=number_of_users+1)
+	# submit a request :
+	mutual_fund.submitARequest(1234, {"from": user})
 
-# 	mutual_fund = deploy_mutual_fund(totalUsers=number_of_users+1)
+	with pytest.raises(exceptions.VirtualMachineError):
+		# try to vote for the request, as NOT a jury member :
+		mutual_fund.voteForARequest(0, False, {"from": user})
 
-# 	mutual_fund.submitARequest(amount_requested, {"from": owner})
+
+	# assert(mutual_fund.voteForARequest(0, False, {"from": userJury}))
+
+def test_a_jury_member_cannot_vote_twice():
+
+	# create the owner
+	owner = get_account()
+	# create a random user NOT in the hardcoded jury:
+	user = get_account(1)
+	# create a user IN the hardcoded jury:
+	userJury = get_account(3)
+	# the hardcoded jury goes to 9, so we need at least 9 users:
+	number_of_users = 9
+	# deploy contract
+	mutual_fund = deploy_mutual_fund(totalUsers=number_of_users+1)
+	# submit a request :
+	mutual_fund.submitARequest(1234, {"from": user})
+
+	# a jury member votes once :
+	mutual_fund.voteForARequest(0, False, {"from": userJury})
+
+	jury_member_has_voted = mutual_fund.checkIfJuryMemberHasVoted(0, userJury.address, {"from": owner})
+	non_jury_member_has_not_voted = mutual_fund.checkIfJuryMemberHasVoted(0, user.address, {"from": owner})
+	print(f" Jury Member has voted : {jury_member_has_voted}")
+	print(f" Non Jury Member has not voted : {non_jury_member_has_not_voted}")
+
+	# with pytest.raises(exceptions.VirtualMachineError):
+	# 	# try to vote for the request, as NOT a jury member :
+	# 	mutual_fund.voteForARequest(0, False, {"from": userJury})
+
+
+
+
+
+
+def test_a_jury_member_can_vote():
+	owner = get_account()
+	number_of_users = 9
+
+	mutual_fund = deploy_mutual_fund(totalUsers=number_of_users+1)
+
+	mutual_fund.submitARequest(amount_requested, {"from": owner})
 
 	# for now it is hardcoded that the jury is the following users :
 	# [users[2], users[4], users[5], users[7], users[8]]
