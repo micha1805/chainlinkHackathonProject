@@ -15,6 +15,18 @@ from scripts.helpful_scripts import (
 
 # ## BACK
 
+
+
+
+
+REQUEST_STATE_DICTIONARY =  {
+	0: "OPEN",
+	1: "ACCEPTED",
+	2: "REFUSED",
+	3: "ERROR"
+}
+
+
 # contract ca be deployed
 def test_contract_can_be_deployed():
 	indexAccount = 0
@@ -162,16 +174,9 @@ def test_user_can_submit_a_request():
 	number_of_users = 9
 	mutual_fund = deploy_mutual_fund(totalUsers=number_of_users+1)
 
-	request_state =  {
-		0: "OPEN",
-		1: "ACCEPTED",
-		2: "REFUSED",
-		3: "ERROR"
-	}
-
 	amount_requested = 123456789101
 	mutual_fund.submitARequest(amount_requested, {"from": user})
-	print(f"First request\n State : {request_state[mutual_fund.all_requests_array(0)[0]]}\n Amount : {mutual_fund.all_requests_array(0)[1]}\n Requester : {mutual_fund.all_requests_array(0)[2]}")
+	print(f"First request\n State : {REQUEST_STATE_DICTIONARY[mutual_fund.all_requests_array(0)[0]]}\n Amount : {mutual_fund.all_requests_array(0)[1]}\n Requester : {mutual_fund.all_requests_array(0)[2]}")
 
 	# test if the array contains something :
 	assert(mutual_fund.all_requests_array(0) != None)
@@ -306,6 +311,7 @@ def test_a_jury_member_cannot_vote_twice():
 def test_a_jury_member_can_vote():
 	owner = get_account()
 	number_of_users = 9
+	amount_requested = 1234
 
 	mutual_fund = deploy_mutual_fund(totalUsers=number_of_users+1)
 
@@ -443,6 +449,64 @@ def test_check_if_money_is_transfered():
 
 	assert(difference_in_contract_balance ==  (0 - amount_requested))
 	assert(difference_in_requester_balance == amount_requested)
+	assert(mutual_fund)
+
+
+def test_check_if_request_state_is_changing_properly():
+
+	owner = get_account()
+	number_of_users = 9
+
+	requester = get_account(1)
+	amount_requested = 999999
+
+	mutual_fund = deploy_mutual_fund(totalUsers=number_of_users+1)
+
+	mutual_fund.submitARequest(amount_requested, {"from": requester})
+
+	request_state_before_complete_vote = REQUEST_STATE_DICTIONARY[mutual_fund.getRequestStateAsNumber(0, {"from": owner})]
+	# print(f"request state before vote : {request_state_before_complete_vote}")
+	# print(f"Request : {mutual_fund.all_requests_array(0)}")
+
+	# Get the jury members
+	jury_members = mutual_fund.getArrayOfJuryMembers(0)
+
+	# make all the jury members vote YES :
+	for jury_member in jury_members:
+		mutual_fund.voteForARequest(0, True, {"from": jury_member})
+
+	request_state_after_complete_vote = REQUEST_STATE_DICTIONARY[mutual_fund.getRequestStateAsNumber(0, {"from": owner})]
+	# print(f"request state after vote : {request_state_after_complete_vote}")
+	# print(f"Request : {mutual_fund.all_requests_array(0)}")
+
+	assert(request_state_before_complete_vote == REQUEST_STATE_DICTIONARY[0])
+	assert(request_state_after_complete_vote == REQUEST_STATE_DICTIONARY[1])
+
+	# make another request :
+	##########################
+
+
+	mutual_fund.submitARequest(amount_requested, {"from": requester})
+
+	request_state_before_complete_vote = REQUEST_STATE_DICTIONARY[mutual_fund.getRequestStateAsNumber(1, {"from": owner})]
+	# print(f"request state before vote : {request_state_before_complete_vote}")
+	# print(f"Request : {mutual_fund.all_requests_array(1)}")
+
+	# Get the jury members
+	jury_members = mutual_fund.getArrayOfJuryMembers(1)
+
+	# make all the jury members vote NO :
+	for jury_member in jury_members:
+		mutual_fund.voteForARequest(1, False, {"from": jury_member})
+
+
+	request_state_after_complete_vote = REQUEST_STATE_DICTIONARY[mutual_fund.getRequestStateAsNumber(1, {"from": owner})]
+	# print(f"request state after vote : {request_state_after_complete_vote}")
+	# print(f"Request : {mutual_fund.all_requests_array(1)}")
+
+	assert(request_state_before_complete_vote == REQUEST_STATE_DICTIONARY[0])
+	assert(request_state_after_complete_vote == REQUEST_STATE_DICTIONARY[2])
+
 
 def test_check_request():
 	pass
