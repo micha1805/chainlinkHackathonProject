@@ -294,9 +294,9 @@ def test_a_jury_member_cannot_vote_twice():
 	print(f" Jury Member has voted : {jury_member_has_voted}")
 	print(f" Non Jury Member has not voted : {non_jury_member_has_not_voted}")
 
-	# with pytest.raises(exceptions.VirtualMachineError):
-	# 	# try to vote for the request, as NOT a jury member :
-	# 	mutual_fund.voteForARequest(0, False, {"from": userJury})
+	with pytest.raises(exceptions.VirtualMachineError):
+		# try to vote for the request, as NOT a jury member :
+		mutual_fund.voteForARequest(0, False, {"from": userJury})
 
 
 
@@ -315,7 +315,92 @@ def test_a_jury_member_can_vote():
 	# [users[2], users[4], users[5], users[7], users[8]]
 
 
+def test_getters_of_vote_counts_and_total_are_working():
+	owner = get_account()
+	number_of_users = 9
 
+	user1 = get_account(1)
+
+	mutual_fund = deploy_mutual_fund(totalUsers=number_of_users+1)
+
+	mutual_fund.submitARequest(1234, {"from": user1})
+	jury_members = mutual_fund.getArrayOfJuryMembers(0)
+	print(f"Length of jury array = {len(jury_members)}")
+
+
+	# get the incrementation value
+	votes_incrementation = mutual_fund.getVoteCountOfRequest(0)
+
+  	# get the total vote value:
+	total_vote = mutual_fund.getVoteTotalOfRequest(0)
+
+	assert(votes_incrementation == 0)
+	assert(total_vote == 0)
+
+	# now I vote :
+	mutual_fund.voteForARequest(0, True, {"from": jury_members[0]})
+
+	# get the new incrementation value
+	votes_incrementation = mutual_fund.getVoteCountOfRequest(0)
+
+  	# get the new total vote value:
+	total_vote = mutual_fund.getVoteTotalOfRequest(0)
+
+	assert(votes_incrementation == 1)
+	assert(total_vote == 1)
+
+	# now a vote form another jury member, he does NOT accept the request :
+	mutual_fund.voteForARequest(0, False, {"from": jury_members[1]})
+
+	# get the new incrementation value
+	votes_incrementation = mutual_fund.getVoteCountOfRequest(0)
+
+  	# get the new total vote value:
+	total_vote = mutual_fund.getVoteTotalOfRequest(0)
+
+	assert(votes_incrementation == 2)
+	assert(total_vote == 1)
+
+
+
+
+# TODO :
+
+def test_check_the_values_tracking_the_votes():
+	owner = get_account()
+	number_of_users = 9
+
+	user1 = get_account(1)
+
+	mutual_fund = deploy_mutual_fund(totalUsers=number_of_users+1)
+
+	mutual_fund.submitARequest(1234, {"from": user1})
+
+	# Get the jury members
+	jury_members = mutual_fund.getArrayOfJuryMembers(0)
+
+	# make all the jury members vote YES :
+	for jury_member in jury_members:
+		mutual_fund.voteForARequest(0, True, {"from": jury_member})
+		print(f"This one voted : {jury_member}")
+		print(f"voteCount : {mutual_fund.getVoteCountOfRequest(0)}")
+		print(f"voteTotal : {mutual_fund.getVoteTotalOfRequest(0)}")
+
+	# get the incrementation value
+	votes_incrementation = mutual_fund.getVoteCountOfRequest(0)
+
+  	# get the total vote value:
+	total_vote = mutual_fund.getVoteTotalOfRequest(0)
+
+	last_request = mutual_fund.all_requests_array(0, {"from": owner})
+
+	print(jury_members)
+	print(f"Request : {last_request}")
+	print(f"voteCount = {votes_incrementation}")
+	print(f"voteTotal = {total_vote}")
+
+	assert(votes_incrementation == 5)
+	assert(total_vote == 5)
 
 
 def test_check_request():
