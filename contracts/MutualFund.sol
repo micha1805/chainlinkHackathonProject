@@ -44,6 +44,9 @@ contract MutualFund is VRFConsumerBase, Ownable {
 
 	// users
 	address payable[] public users;
+	uint256[] shuffledUsersIndex;
+	uint256 usersArraySize;
+	uint256[5] tmpJuryMembers;
 	mapping(address => bool) public userIsPresent; // to quickly check if msg.sender is already a user
 	mapping(address => uint256) public userBalance; // in WEI
 
@@ -57,7 +60,7 @@ contract MutualFund is VRFConsumerBase, Ownable {
 	uint256 public fee;
 	bytes32 public keyHash;
 	event RequestedRandomness(bytes32 requestId);
-	uint256 public randomness;
+	uint256 public randomness = 134123425;
 
 
 
@@ -97,6 +100,11 @@ contract MutualFund is VRFConsumerBase, Ownable {
 		users.push(payable(msg.sender));
 		userIsPresent[msg.sender] = true;
 		userBalance[payable(msg.sender)] = msg.value;
+
+		// add the new index in the shuffled array :
+		shuffledUsersIndex.push(usersArraySize);
+		// increment size of users arrays
+		usersArraySize++;
 
 	}
 
@@ -237,6 +245,24 @@ contract MutualFund is VRFConsumerBase, Ownable {
 
 	}
 
+	// this should be privaten but it's not for testing purposes :
+	function shuffleUsers() public returns(uint256[5] memory juryMembersIndexes){
+		uint256 _sampleSize;
+		_sampleSize = 5;
+
+    for(uint256 i = 0; i < _sampleSize; i++) {
+        uint256 n = i + uint256(keccak256(abi.encodePacked(randomness, i))) % (shuffledUsersIndex.length - i);
+        uint256 temp = shuffledUsersIndex[n];
+        shuffledUsersIndex[n] = shuffledUsersIndex[i];
+        shuffledUsersIndex[i] = temp;
+        juryMembersIndexes[i] = temp;
+        tmpJuryMembers[i] = temp;
+
+    }
+
+    return juryMembersIndexes;
+}
+
 
 	// function called by chainlink VRF :
 	function fulfillRandomness(bytes32 _requestId, uint256 _randomness)
@@ -286,6 +312,14 @@ contract MutualFund is VRFConsumerBase, Ownable {
   function getRequestStateAsNumber(uint256 _requestIndex) public view returns(uint256){
 
   	return uint256(all_requests_array[_requestIndex].state);
+  }
+
+  function getShuffledArrayOfUsers() public view returns(uint256[] memory ){
+  	return shuffledUsersIndex;
+  }
+
+  function getArrayOfJuryMembersIndexes() public view returns(uint256[5] memory ){
+  	return tmpJuryMembers;
   }
 
 	////////////////////

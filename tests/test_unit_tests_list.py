@@ -312,10 +312,11 @@ def test_a_jury_member_can_vote():
 	owner = get_account()
 	number_of_users = 9
 	amount_requested = 1234
+	user1 = get_account(1)
 
 	mutual_fund = deploy_mutual_fund(totalUsers=number_of_users+1)
 
-	mutual_fund.submitARequest(amount_requested, {"from": owner})
+	mutual_fund.submitARequest(amount_requested, {"from": user1})
 
 	# for now it is hardcoded that the jury is the following users :
 	# [users[2], users[4], users[5], users[7], users[8]]
@@ -367,10 +368,6 @@ def test_getters_of_vote_counts_and_total_are_working():
 	assert(votes_incrementation == 2)
 	assert(total_vote == 1)
 
-
-
-
-# TODO :
 
 def test_check_the_values_tracking_the_votes():
 	owner = get_account()
@@ -507,6 +504,34 @@ def test_check_if_request_state_is_changing_properly():
 	assert(request_state_before_complete_vote == REQUEST_STATE_DICTIONARY[0])
 	assert(request_state_after_complete_vote == REQUEST_STATE_DICTIONARY[2])
 
+
+def test_can_shuffle_users_index():
+
+	owner = get_account()
+	number_of_users = 9
+
+	requester = get_account(1)
+	amount_requested = 999999
+
+	mutual_fund = deploy_mutual_fund(totalUsers=number_of_users+1)
+
+	tx = mutual_fund.shuffleUsers({"from": owner})
+	shuffled_users_array = mutual_fund.getShuffledArrayOfUsers({"from": owner})
+	jury_members_array = mutual_fund.getArrayOfJuryMembersIndexes({"from": owner})
+
+	print(f"Shuffled users array {shuffled_users_array}")
+	print(f"jury members {jury_members_array}")
+	# print(f"Shuffled users array {shuffled_users_array(0)}")
+	# print(f"Shuffled users array {shuffled_users_array(1)}")
+	# print(f"Shuffled users array {shuffled_users_array(2)}")
+	# print(f"Shuffled users array {shuffled_users_array(3)}")
+	# print(f"Shuffled users array {shuffled_users_array(4)}")
+
+
+
+
+def test_cannot_transfer_fund_if_balance_is_too_low():
+	pass
 
 def test_check_request():
 	pass
