@@ -7,35 +7,15 @@ import "@chainlink/contracts/src/v0.6/VRFConsumerBase.sol";
 
 contract MutualFund is VRFConsumerBase, Ownable {
 
-
-
 	///////////////////////////
 	// VARIABLES DECLARATION //
 	///////////////////////////
 
+	// custom data types
 	enum FUND_STATE {
 		READY,
 		COMPUTING_JUREES // to prevent 2 calls at the same time
 	}
-
-	FUND_STATE public fund_state;
-
-	// to track the RNG behaviour :
-	event RequestedRandomness(bytes32 requestId);
-
-  // Address of all users
-  address payable[] public users;
-	// balance of each user, defautl to 0 :
-	mapping(address => uint256) public userBalance; // in WEI
-
-	// random number written by chainlink VRF :
-	uint256 public randomness;
-
-
-
-	///////////////////////
-	// REQUEST VARIABLES //
-	///////////////////////
 
 	enum REQUEST_STATE {
 		OPEN,
@@ -44,39 +24,44 @@ contract MutualFund is VRFConsumerBase, Ownable {
 		ERROR
 	}
 
-
-	// custom type to store request info :
 	struct Request {
-		// if the request is still under review, accepted, refused, or error
-		// (ex: the request was made during a FUND STATE of COMPUTING_JUREES)
-		REQUEST_STATE state;
-		// index is the place in each array.
-		uint256 index;
-		// array of jurees
-		address payable[] jurees;
-		// mapping to see if juree has voted :
-		mapping(address => bool) hasVoted; // default is false : OK
-		// address of the nft for the request :
-		address nft;
+		REQUEST_STATE state; // index 0
+		uint256 amount;// index 1
+		address requester; //index 2
+		address payable[5] jury_members; // index 3
+		mapping(address => bool) user_is_a_jury_member; //index 4
+		uint256 jury_members_array_size; // index 5
+		// // mapping to see if juree has voted :
+		mapping(address => bool) hasVoted; // default is false : OK // index 6
+		uint256 voteTotal; // every jury member increment this for a yes vote // index 7
+		uint256 voteCount; // when this goes to 5 everybody has voted // index 8
 	}
 
-	// store all requests :
+
+	// contract itself
+	FUND_STATE public fund_state;
+
+
+	// users
+	address payable[] public users;
+	uint256[] shuffledUsersIndex;
+	uint256 usersArraySize;
+	uint256[5] tmpJuryMembers;
+	mapping(address => bool) public userIsPresent; // to quickly check if msg.sender is already a user
+	mapping(address => uint256) public userBalance; // in WEI
+
+
+	// requests
 	Request[] public all_requests_array;
-	// using a mapping to easily filter Requests per STATE :
-	mapping(uint256 => Request) public request_mapping;
+	mapping(uint256 => Request) public request_mapping; // to easily filter Requests per STATE
 	uint256 public requests_number;
 
-	// settings variables, modifiables by owner
-	uint256 public max_multiple = 10;
-	uint256 public jurees_number = 5;
-	uint256 public max_percentage_per_request = 1;
-	// for simplicity the juree's numbere is fixed :
-	uint256 public FIXED_JUREE_NUMBER = 5;
-	uint256[5] public fake_random_indexes_array = [ 2, 3, 5, 6, 8];
-
-	// VRF Settings
+	// // VRF Settings
 	uint256 public fee;
 	bytes32 public keyHash;
+	event RequestedRandomness(bytes32 requestId);
+	uint256 public randomness = 134123425;
+
 
 
 
@@ -94,10 +79,14 @@ contract MutualFund is VRFConsumerBase, Ownable {
 		uint256 _fee,
 		bytes32 _keyHash
 		) public VRFConsumerBase(_vrfCoordinator, _link){
-		// owner = msg.sender;
+
+		// VRF Settings
 		fee = _fee;
 		keyHash = _keyHash;
+
+		// Set contract state
 		fund_state = FUND_STATE.READY;
+
 	}
 
 
@@ -105,19 +94,19 @@ contract MutualFund is VRFConsumerBase, Ownable {
 
 	function enter() public payable {
 
-		// check if user is already in user's array AND balance is non zero :
-		///
-	  // require(msg.value >= getEntranceFee(), "User already");
+		// prevent duplicates :
+		require( userIsPresent[msg.sender] == false, "User is already present in the Fund");
 
-		// add user to user list:
 		users.push(payable(msg.sender));
-		// set his balance to
+		userIsPresent[msg.sender] = true;
 		userBalance[payable(msg.sender)] = msg.value;
-	}
 
-	// function quit() public {
-	// 	// just set mapping value to 0, cannot remove user from array
-	// }
+		// add the new index in the shuffled array :
+		shuffledUsersIndex.push(usersArraySize);
+		// increment size of users arrays
+		usersArraySize++;
+
+	}
 
 	function payMonthlyFee() public payable{
 		userBalance[address(msg.sender)] = userBalance[address(msg.sender)] + msg.value;
@@ -125,15 +114,13 @@ contract MutualFund is VRFConsumerBase, Ownable {
 
 
 	function getTotalBalanceOfContract() public view returns(uint256){
-		// use a global variable updated at each transaction? To avoid huge computation
-		// at each call?
 		return address(this).balance;
 	}
 
 
-	/////////////////////////
-	// REQUESTS MANAGEMENT //
-	/////////////////////////
+	///////////////
+	// REQUESTS  //
+	///////////////
 
 	function getMaxRequestAmount(address _userAddress) private view returns(uint256){
 
@@ -141,8 +128,8 @@ contract MutualFund is VRFConsumerBase, Ownable {
 		// AND maximum equal to than 1% of Contract balance
 
 		uint256 maxAmount;
-		uint256 maxAmountAccordingToUserBalance = userBalance[_userAddress]*max_multiple;
-		uint256 maxAmountAccordingToContractBalance = (getTotalBalanceOfContract() * max_percentage_per_request)/100;
+		uint256 maxAmountAccordingToUserBalance = userBalance[_userAddress]*10;
+		uint256 maxAmountAccordingToContractBalance = (getTotalBalanceOfContract() * 1)/100;
 
 		if(maxAmountAccordingToUserBalance > maxAmountAccordingToContractBalance){
 			return maxAmountAccordingToContractBalance;
@@ -153,24 +140,131 @@ contract MutualFund is VRFConsumerBase, Ownable {
 	}
 
 
+	// function is public for test purposes only, should be private:
+	function getJury_members() public returns(address payable[5] memory){
+		// hardcoded array of 5 elements, to begin with :
+		address payable[5] memory tmpArray = [users[2], users[4], users[5], users[7], users[8]];
+		return tmpArray;
+	}
 
-	function submitARequest() public {
+	// submit a request
+	function submitARequest(uint256 _amountRequested) public {
+
 		require(
 			fund_state == FUND_STATE.READY,
-			"Contract is currently busy creating a juree, try later"
+			"Contract is currently busy building a set of jury members, try later"
+			);
+		require(
+			userIsPresent[msg.sender] == true,
+			"User must enter the contract first"
 			);
 
-		// create a random array of jury members.
-		// create a Request struct
-		// create the nft (ideally)
-		// put it inside the requests array
+		Request memory newRequest;
 
-		// DO STUFF
+		// create a random array of jury members.
+		address payable[5] memory tmp_jury_members;
+		tmp_jury_members = getJury_members();
+
+
+		// fill in the tmp request and push it to the global array:
+		newRequest.state = REQUEST_STATE.OPEN;
+		newRequest.amount = _amountRequested;
+		newRequest.requester = msg.sender;
+
+		all_requests_array.push(newRequest);
+
+		// get index of current request
+		uint all_requests_array_last_index = all_requests_array.length - 1;
+
+		// fill in the jury members array INSIDE the global array of request, couldn't make it work using
+		// the tmp request here above.
+		for(uint256 i = 0; i<5;i++){
+			all_requests_array[all_requests_array_last_index].jury_members[i] = tmp_jury_members[i];
+			all_requests_array[all_requests_array_last_index].user_is_a_jury_member[tmp_jury_members[i]] = true;
+		}
+
 	}
 
 
+	// // check the status of request to see if everybody has voted
+	// function checkRequestStatus(uint256 _requestIndex) public {
 
-	// function called bu chainlink VRF :
+
+	// }
+
+	// vote for a request
+	function voteForARequest(uint _requestIndex, bool _vote) public{
+
+		// request mu be open
+		require(all_requests_array[_requestIndex].state == REQUEST_STATE.OPEN, "request is closed");
+
+		// must be a jury member:
+		require(checkIfUserIsAJuryMember(_requestIndex, msg.sender), "You must be a jury member for that request");
+		// cannot vote twice:
+		require(all_requests_array[_requestIndex].hasVoted[msg.sender] == false, "you have already voted");
+
+		// record the vote has been made:
+		all_requests_array[_requestIndex].hasVoted[msg.sender] = true;
+
+		// increment the vote total result if needed:
+		if(_vote){
+			uint256 currentTotalVote = all_requests_array[_requestIndex].voteTotal;
+			all_requests_array[_requestIndex].voteTotal = currentTotalVote + 1;
+		}
+
+		// increment the value tracking the number of votes already made :
+		uint256 currentVoteCount = all_requests_array[_requestIndex].voteCount;
+		all_requests_array[_requestIndex].voteCount = currentVoteCount + 1;
+
+
+		// check if everybody has voted
+		// checkRequestStatus(_requestIndex);
+		if(all_requests_array[_requestIndex].voteCount == 5){
+				// everybody has voted
+				// check the result
+				// send the money of needed
+				if(all_requests_array[_requestIndex].voteTotal > 2){
+					// first set the request state to ERROR, such that if the transfer
+					// reverts afterwards in the transfer, the state is already correct;
+					all_requests_array[_requestIndex].state = REQUEST_STATE.ERROR;
+					// send the money
+					address payable requesterAddress = payable(all_requests_array[_requestIndex].requester);
+					uint256 amountToTransfer = all_requests_array[_requestIndex].amount;
+					// Set the status to accepted
+					// transfer money:
+					requesterAddress.transfer(amountToTransfer);
+					// if the above suceeds, then change the request to correct state :
+					all_requests_array[_requestIndex].state = REQUEST_STATE.ACCEPTED;
+
+				}else{
+					// set status to REFUSED
+					all_requests_array[_requestIndex].state = REQUEST_STATE.REFUSED;
+				}
+			}
+
+
+	}
+
+	// this should be privaten but it's not for testing purposes :
+	function shuffleUsers() public returns(uint256[5] memory juryMembersIndexes){
+		uint256 _sampleSize;
+		_sampleSize = 5;
+
+    for(uint256 i = 0; i < _sampleSize; i++) {
+        uint256 n = i + uint256(keccak256(abi.encodePacked(randomness, i))) % (shuffledUsersIndex.length - i);
+        uint256 temp = shuffledUsersIndex[n];
+        shuffledUsersIndex[n] = shuffledUsersIndex[i];
+        shuffledUsersIndex[i] = temp;
+        juryMembersIndexes[i] = temp;
+        tmpJuryMembers[i] = temp;
+
+    }
+
+    return juryMembersIndexes;
+}
+
+
+	// function called by chainlink VRF :
 	function fulfillRandomness(bytes32 _requestId, uint256 _randomness)
 	internal
 	override
@@ -182,121 +276,57 @@ contract MutualFund is VRFConsumerBase, Ownable {
 
 	}
 
+	////////////////////
+	// custom getters //
+	////////////////////
 
-	function getRandomArrayOfJurees() private {
-
-		// This function gets ONE random number from Chainlink VRF, converts it to an index number, from
-		// then iterate to the N next adresses to get correct amount of accounts.
-		// This is not optimal (each different group of jurees will always be very similar), also if you
-		// create N accounts and enter the contract afterwards, you could easily get a huge lever in
-		// a juree if all of them are selected to be juree.
-		// This 'trick' is done mainly to reduce gas fee due to :
-		// 1) big computations (a random subarray needs a lot of permutation computations) and
-		// 2) multiple calls to Chainlik VRF to get multiple different indexes, we only us 1 call here.
-		//
-		// Next versions of this contract should get a better way to choose N different random users.
-
-
-		// before everything :  prevent another computation :
-		fund_state = FUND_STATE.COMPUTING_JUREES;
-
-		// FIRST STEP : Get a random number
-
-		bytes32 requestId = requestRandomness(keyHash, fee);
-		// emit to event to track it :
-		emit RequestedRandomness(requestId);
-
-
-    // SECOND STEP : get a random array of users
-    // delete jurees;
-
-
-
-    // final step : reopenn the possibility to create a new juree.
-    fund_state = FUND_STATE.READY;
-  }
-
-
-
-  function createAnNFTRequest() private {}
-
-
-  function checkIfIAmAJuree() public{
-  	// this function is called by the front to check if the user is in a new juree
-
-  	// loop on all the open request, and check if my address is there.
-  }
-
-  function voteOfJureeForARequest(uint256 indexRequest, bool _vote) public {
-  	// check if juree has already voted
-  	// if not
-  }
-
-  function modifyRequestVote(uint256 indexRequest) private {
-
-  }
-
-
-  function getOpenRequestsIndexes() public view returns(uint[] memory filteredRequestsIndexes){
-
-  	uint256[] storage index_of_open_requests;
-  	Request[] memory requestsTemp = new Request[](requests_number);
-  	uint256 count;
-
-
-  	for(uint256 i=0;i<requests_number;i++){
-  		if(request_mapping[i].state == REQUEST_STATE.OPEN){
-            requestsTemp[count] = request_mapping[i]; //or whatever you want to do if it matches
-            count += 1;
-      }
-  	}
-
-  	filteredRequestsIndexes = new uint256[](count);
-  	for(uint256 i = 0; i<count; i++){
-      filteredRequestsIndexes[i] = requestsTemp[i].index;
-    }
-
-    // the following array contains the indexes of all the open requests :
-  	return filteredRequestsIndexes;
-  }
-
-
-  function checkIfUserBelongsToAJureeOfACertainRequest(uint256 _userAddress, uint256 _requestIndex) public view returns(bool _answer){
-
-  	_answer = false;
-
-  	for(uint i=0;i<all_requests_array.length;i++){
-
-	  	for(uint j=0;j<FIXED_JUREE_NUMBER;j++){
-	  		if(address(all_requests_array[i].jurees[i]) == msg.sender){
-	  			_answer = true;
-	  		}
-	  	}
-
-  	}
-
-  	return _answer;
-  }
-
-	/////////////
-	// SETTERS //
-	/////////////
-
-	function modifyJureesNumber(uint256 _newJureesNumber) public onlyOwner {
-		jurees_number = _newJureesNumber;
+	function getUserNumbers() public view returns(uint256 count) {
+		return users.length;
 	}
 
-	function modifyMultiple(uint256 _newMultiple) public onlyOwner {
-		max_multiple = _newMultiple;
+  function getArrayOfJuryMembers(uint256 _index) public view returns(address payable[5] memory juryMembersArray){
+
+  	Request memory tmp_request;
+  	tmp_request = all_requests_array[_index];
+		juryMembersArray = tmp_request.jury_members;
+
+  	return juryMembersArray;
+  }
+
+  function checkIfUserIsAJuryMember(uint256 _requestIndex, address _addresToCheck) public view returns(bool){
+  	return all_requests_array[_requestIndex].user_is_a_jury_member[_addresToCheck];
+  }
+
+  function checkIfJuryMemberHasVoted(uint256 _requestIndex, address _juryMember) public view returns(bool){
+  	return all_requests_array[_requestIndex].hasVoted[_juryMember];
+  }
+
+  function getVoteCountOfRequest(uint256 _requestIndex) public view returns(uint256){
+  	return all_requests_array[_requestIndex].voteCount;
+  }
+
+  function getVoteTotalOfRequest(uint256 _requestIndex) public view returns(uint256){
+  	return all_requests_array[_requestIndex].voteTotal;
+  }
+
+  function getRequestStateAsNumber(uint256 _requestIndex) public view returns(uint256){
+
+  	return uint256(all_requests_array[_requestIndex].state);
+  }
+
+  function getShuffledArrayOfUsers() public view returns(uint256[] memory ){
+  	return shuffledUsersIndex;
+  }
+
+  function getArrayOfJuryMembersIndexes() public view returns(uint256[5] memory ){
+  	return tmpJuryMembers;
+  }
+
+	////////////////////
+	// custom setters //
+	////////////////////
+
+	function setContractState(uint256 _newState) public onlyOwner {
+		fund_state = FUND_STATE(_newState);
 	}
-
-	// in case of bug, to avoid a broken contract:
-	function forceSetting() public onlyOwner {
-		fund_state = FUND_STATE.READY;
-	}
-
-	// // To be understood :
-	// function checkEachMonth() private {} // Chainlink keeper CRON?
-	//
-
 }

@@ -31,28 +31,40 @@ contract_to_mock = {
 DECIMALS = 18
 INITIAL_VALUE = web3.toWei(2000, "ether")
 
-def deploy_mutual_fund(index=None):
-    # account = get_account(id="freecodecamp-account")
-    account = get_account(index)
+def deploy_mutual_fund(index=None, totalUsers=1):
+	# account = get_account(id="freecodecamp-account")
+	account = get_account(index)
 
-    # check the constructor to get all the needed parameters
-    mutual_fund = MutualFund.deploy(
-        get_contract("vrf_coordinator").address,
-        get_contract("link_token").address,
-        config["networks"][network.show_active()]["fee"],
-        config["networks"][network.show_active()]["keyhash"],
-        {"from": account},
-        # verify is set to default = False
-        publish_source=config["networks"][network.show_active()].get("verify", False),
-    )
-    print("Deployed Mutual Fund contract")
-    return mutual_fund
+	# check the constructor to get all the needed parameters
+	mutual_fund = MutualFund.deploy(
+		get_contract("vrf_coordinator").address,
+		get_contract("link_token").address,
+		config["networks"][network.show_active()]["fee"],
+		config["networks"][network.show_active()]["keyhash"],
+		{"from": account},
+		# verify is set to default = False
+		publish_source=config["networks"][network.show_active()].get("verify", False),
+	)
+
+	# add 9 other accounts :
+	number_of_users = totalUsers - 1 # -1 because we alreadu have an owner
+	my_integer_list = list(range(number_of_users))
+
+	value_to_send_to_contract_per_user = web3.toWei(1, "ether")
+
+	for i in my_integer_list:
+		new_account = get_account(index=i+1)
+		mutual_fund.enter({"value": value_to_send_to_contract_per_user, "from": new_account})
+
+
+	print(f"Deployed Mutual Fund contract with 1 owner and {number_of_users} other users")
+	return mutual_fund
 
 
 
 
 
-
+# Note : cannot get more than 10 accounts
 def get_account(index=None, id=None):
     if index:
         return accounts[index]
