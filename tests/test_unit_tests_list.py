@@ -517,16 +517,13 @@ def test_can_shuffle_users_index():
 
 	tx = mutual_fund.shuffleUsers({"from": owner})
 	shuffled_users_array = mutual_fund.getShuffledArrayOfUsers({"from": owner})
-	jury_members_array = mutual_fund.getArrayOfJuryMembersIndexes({"from": owner})
+	jury_members_array_tmp = mutual_fund.getArrayOfJuryMembersIndexes({"from": owner})
 
 	print(f"Shuffled users array {shuffled_users_array}")
-	print(f"jury members {jury_members_array}")
-	# print(f"Shuffled users array {shuffled_users_array(0)}")
-	# print(f"Shuffled users array {shuffled_users_array(1)}")
-	# print(f"Shuffled users array {shuffled_users_array(2)}")
-	# print(f"Shuffled users array {shuffled_users_array(3)}")
-	# print(f"Shuffled users array {shuffled_users_array(4)}")
+	print(f"jury members {jury_members_array_tmp}")
 
+	assert(len(jury_members_array_tmp) == 5)
+	assert(len(shuffled_users_array) == number_of_users)
 
 
 

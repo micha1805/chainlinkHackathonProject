@@ -55,12 +55,16 @@ contract MutualFund is VRFConsumerBase, Ownable {
 	Request[] public all_requests_array;
 	mapping(uint256 => Request) public request_mapping; // to easily filter Requests per STATE
 	uint256 public requests_number;
+	uint256 private currentComputingRequestIndex;
 
 	// // VRF Settings
 	uint256 public fee;
 	bytes32 public keyHash;
 	event RequestedRandomness(bytes32 requestId);
-	uint256 public randomness = 134123425;
+	bytes32 requestId;
+	uint256 public randomness;
+	address linkTokenAddress;
+	address vrfCoordinator;
 
 
 
@@ -83,6 +87,8 @@ contract MutualFund is VRFConsumerBase, Ownable {
 		// VRF Settings
 		fee = _fee;
 		keyHash = _keyHash;
+		vrfCoordinator = _vrfCoordinator;
+		linkTokenAddress = _link;
 
 		// Set contract state
 		fund_state = FUND_STATE.READY;
@@ -147,6 +153,13 @@ contract MutualFund is VRFConsumerBase, Ownable {
 		return tmpArray;
 	}
 
+	function makeJury(uint256 _requestIndex) public returns (bytes32 requestId) {
+
+		require(LINK.balanceOf(address(this)) >= fee, "Not enough LINK - fill contract with faucet");
+		return requestRandomness(keyHash, fee);
+
+	}
+
 	// submit a request
 	function submitARequest(uint256 _amountRequested) public {
 
@@ -163,7 +176,15 @@ contract MutualFund is VRFConsumerBase, Ownable {
 
 		// create a random array of jury members.
 		address payable[5] memory tmp_jury_members;
-		tmp_jury_members = getJury_members();
+
+
+		// get index of current request
+		currentComputingRequestIndex = all_requests_array.length - 1;
+
+		fund_state = FUND_STATE.COMPUTING_JUREES;
+		// the following will call VRF then the VRF will call the fullFillrandomness that will
+		makeJury();
+		// tmp_jury_members = getJury_members();
 
 
 		// fill in the tmp request and push it to the global array:
@@ -172,16 +193,6 @@ contract MutualFund is VRFConsumerBase, Ownable {
 		newRequest.requester = msg.sender;
 
 		all_requests_array.push(newRequest);
-
-		// get index of current request
-		uint all_requests_array_last_index = all_requests_array.length - 1;
-
-		// fill in the jury members array INSIDE the global array of request, couldn't make it work using
-		// the tmp request here above.
-		for(uint256 i = 0; i<5;i++){
-			all_requests_array[all_requests_array_last_index].jury_members[i] = tmp_jury_members[i];
-			all_requests_array[all_requests_array_last_index].user_is_a_jury_member[tmp_jury_members[i]] = true;
-		}
 
 	}
 
@@ -251,7 +262,7 @@ contract MutualFund is VRFConsumerBase, Ownable {
 		_sampleSize = 5;
 
     for(uint256 i = 0; i < _sampleSize; i++) {
-        uint256 n = i + uint256(keccak256(abi.encodePacked(randomness, i))) % (shuffledUsersIndex.length - i);
+        uint256 n = i + uint256(keccak256(abi.encodePacked(randomness, block.timestamp, i))) % (shuffledUsersIndex.length - i);
         uint256 temp = shuffledUsersIndex[n];
         shuffledUsersIndex[n] = shuffledUsersIndex[i];
         shuffledUsersIndex[i] = temp;
@@ -273,12 +284,23 @@ contract MutualFund is VRFConsumerBase, Ownable {
 		require(_randomness > 0, "random-not-found");
 		randomness = _randomness;
 
+		uint256[5] shuffledJuryMemberIndex;
+		shuffledJuryMemberIndex = shuffleUsers();
 
+		// fill in the jury members array INSIDE the global array of request, couldn't make it work using
+		// the tmp request here above.
+		for(uint256 i = 0; i<5;i++){
+			all_requests_array[currentComputingRequestIndex].jury_members[i] = users[shuffledJuryMemberIndex[i]];
+			all_requests_array[currentComputingRequestIndex].user_is_a_jury_member[tmp_jury_members[i]] = true;
+		}
+
+		fund_state = FUND_STATE.READY;
 	}
 
 	////////////////////
 	// custom getters //
 	////////////////////
+
 
 	function getUserNumbers() public view returns(uint256 count) {
 		return users.length;
