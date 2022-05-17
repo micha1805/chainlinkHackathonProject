@@ -153,7 +153,7 @@ contract MutualFund is VRFConsumerBase, Ownable {
 		return tmpArray;
 	}
 
-	function makeJury(uint256 _requestIndex) public returns (bytes32 requestId) {
+	function makeJury() public returns (bytes32 requestId) {
 
 		require(LINK.balanceOf(address(this)) >= fee, "Not enough LINK - fill contract with faucet");
 		return requestRandomness(keyHash, fee);
@@ -284,14 +284,14 @@ contract MutualFund is VRFConsumerBase, Ownable {
 		require(_randomness > 0, "random-not-found");
 		randomness = _randomness;
 
-		uint256[5] shuffledJuryMemberIndex;
+		uint256[5] memory shuffledJuryMemberIndex;
 		shuffledJuryMemberIndex = shuffleUsers();
 
 		// fill in the jury members array INSIDE the global array of request, couldn't make it work using
 		// the tmp request here above.
 		for(uint256 i = 0; i<5;i++){
 			all_requests_array[currentComputingRequestIndex].jury_members[i] = users[shuffledJuryMemberIndex[i]];
-			all_requests_array[currentComputingRequestIndex].user_is_a_jury_member[tmp_jury_members[i]] = true;
+			all_requests_array[currentComputingRequestIndex].user_is_a_jury_member[users[shuffledJuryMemberIndex[i]]] = true;
 		}
 
 		fund_state = FUND_STATE.READY;
