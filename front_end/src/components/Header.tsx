@@ -10,7 +10,7 @@ const { account, activateBrowserWallet, deactivate } = useEthers()
 const isConnected = account !== undefined
 
 	return (
-		<div>
+		<div className="header-component">
 
 		{isConnected ? (
 
