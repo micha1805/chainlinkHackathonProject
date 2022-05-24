@@ -1,5 +1,6 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
+import { ChainId, DAppProvider } from "@usedapp/core"
 import './index.css';
 import App from './App';
 import reportWebVitals from './reportWebVitals';
@@ -9,7 +10,18 @@ const root = ReactDOM.createRoot(
 );
 root.render(
   <React.StrictMode>
-    <App />
+
+      <DAppProvider config={{
+      // supportedChains: [ChainId.Kovan, ChainId.Rinkeby, 1337]
+      supportedChains: [ChainId.Kovan],
+      notifications: {
+        expirationPeriod: 1000,
+        checkInterval: 1000
+      }
+    }}>
+   		<App />
+    </DAppProvider>
+
   </React.StrictMode>
 );
 
