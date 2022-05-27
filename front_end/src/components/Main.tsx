@@ -30,7 +30,8 @@ const isConnected = account !== undefined
     return (
         <>
         	<div className="main-component">
-        		MutualFund address is (Kovan): {isConnected ? mutualFund : "Not connected"}
+        		<p>MutualFund address is (Kovan): {isConnected ? mutualFund : "Not connected"}</p>
+        		<p>Current User address is : {isConnected ? account : "Not connected"}</p>
         	</div>
 
       		<TabContext value={selectedTab.toString()}>
