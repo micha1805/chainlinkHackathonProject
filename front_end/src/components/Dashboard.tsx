@@ -1,10 +1,37 @@
 import React, { useState, useEffect } from "react"
 import { Input, Button, CircularProgress, Snackbar, Alert } from "@mui/material"
 import {useEnter} from "../hooks/useEnter"
+import {useFetchBalance} from "../hooks/useFetchBalance"
 import { useNotifications } from "@usedapp/core"
+import { useContractFunction, useEthers, useCall } from "@usedapp/core"
+import MutualFund from "../chain-info/contracts/MutualFund.json"
+import { Contract } from "@ethersproject/contracts"
+import { constants, utils } from "ethers"
+import networkMapping from "../chain-info/deployments/map.json"
 
 export const Dashboard = () => {
 
+	// const	{account, chainId} = useEthers()
+
+
+	// // function to get balance of user
+	// const fetchBalance = () => {
+
+	// 	const { abi } = MutualFund
+	// 	const mutualFundAddress = chainId ? networkMapping[String(chainId)]["MutualFund"][0] : constants.AddressZero
+	// 	const mutualFundInterface = new utils.Interface(abi)
+	// 	const MutualFundContract = new Contract(mutualFundAddress, mutualFundInterface)
+
+
+	//   const { value, error } = useCall(mutualFundAddress && {
+	//      contract: MutualFundContract,
+	//      method: 'userBalance',
+	//      args: [account]
+	//    }) ?? {}
+
+	//   if(error) return error
+	//   return value
+	// }
 
 
 
@@ -20,6 +47,9 @@ export const Dashboard = () => {
 
   const [ showEnterSuccess, setShowEnterSuccess ] = useState(false)
 
+  const {value, error} = useFetchBalance()
+
+
 
   // handler functions
 
@@ -32,11 +62,11 @@ export const Dashboard = () => {
 	}
 	const handleEnterSubmit = () => {
 		console.log(amountOnEnter)
-		return enterContract()
+		return enterContract({ value: amountOnEnter.toString() })
 	}
 
 	const handleFetchBalance = () =>  {
-		setUserBalanceOnContract(userBalanceOnContract +1)
+		// setUserBalanceOnContract(userBalance)
 	}
 
 
@@ -74,7 +104,7 @@ export const Dashboard = () => {
 				{/*Enter contract*/}
 				<div className="enter_contract">
 
-					<p>Enter contract with following amount :</p>
+					<p>Enter contract with following amount (WEI):</p>
 					<Input onChange={handleEnterChange} />
 					<Button
 						color="primary"
@@ -98,12 +128,12 @@ export const Dashboard = () => {
 
 				{/*Get balance on the contract*/}
 				<div className="getCurrentBalance">
-					<span className="userBalanceOnContract"> Current User balance on the Contract : {userBalanceOnContract} ETH</span>
+					<span className="userBalanceOnContract"> Current User balance on the Contract : {value} ETH</span>
 				<Button
 						color="primary"
 						size="large"
 						onClick={handleFetchBalance}
-						disabled={txFetchPending}
+						disabled={true}
 					>Fetch data
 					</Button>
 
