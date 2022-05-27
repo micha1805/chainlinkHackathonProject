@@ -57,7 +57,7 @@ To deploy, for instance on Kovan, run the following :
 
 ### Tests
 
-My whole test are in the test scripts : tests/test_unit_tests_list.py
+My whole test are in the following test script : `tests/test_unit_tests_list.py`
 
 If you want to run the tests, on the root folder run :
 `brownie test`
@@ -71,14 +71,14 @@ If you want to run the front end, go to the `front_end` folder, first install th
 Then launch the app :
 `npm start`
 
-It should run on localhost:3000
+It should run on `localhost:3000`
 
 
 If you have some troubles, try the following, to fetch to the front-end folder the information from the backend :
 `brownie run scripts/update_front_end.py`
 
 
-The front-end is not complete, for now it's only possible to enter the contract (and fund it at the same time) and to submit a request.
+The front-end is not complete, for now it's only possible to enter the contract (and fund it at the same time) and submit a request.
 
 #### Enter the contract
 
@@ -130,3 +130,12 @@ Ideally the random array of users that composes the jury members should really b
 ## admin powers
 
 For now the contract has and admin, a single account. Ideally this admin capacity should be distributed via an admin contract for instance, where all the changes should be submitted to a vote. For the purpose of the hackathon, I just made a simple single user, which is not ideal of course regarding decentralization.
+
+
+## Last word !
+
+Building this all alone, on the side, while still having a full time day job and a young child to take care of, could explain some parts of the incompleteness of this project (especially the front-end and the VRF), but whatever it was a nice experience !
+
+Have a good day whoever reads this !
+
+
