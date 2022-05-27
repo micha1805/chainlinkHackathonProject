@@ -1,24 +1,26 @@
-# Chainlink Hackathon Spring 2022 - Plainchamp
+# Chainlink Hackathon Spring 2022 - Michel Plainchamp
 
 
 ## Mutual Fund
 
-The project consists in creating a Smart Contract of a mutual fund.
+The project consists in creating a Smart Contract of a mutual fund on Ethereum
 
-Anyone can enter the fund and request a sum.
+Anyone can enter the fund and request a sum from that contract.
+
+The sum is allowed or not according to the votes of a random array of users, who become jury members.
 
 
 
 ## How does it work?
 
-You enter the fund via the `enter` function.
+You enter the fund contract via the `enter` function.
 
 When you enter the contract you can submit a request using the `submitARequest` function.
 
 When you call this `submitARequest` function this creates a request struct containing the following informations :
 - the amount desired
 - your address (to transfer the funds)
-- an array of random users that will constitute the jury memebers that will decide if your request is valid or not. (its length is fixed to 5)
+- an array of random users that will compose the jury members that will decide if your request is valid or not. (its length is fixed to 5)
 
 
 (Ideally some information about the request should be inserted but it's not yet implemented.)
@@ -30,7 +32,7 @@ When a request is made each jury member must vote for that specific request usin
 
 ## How to use
 
-Once the repo is pulled add to root of the project an `.env` file containing the following informations :
+Once the repo is pulled add to the root of the project an `.env` file containing the following informations :
 
 
 ```bash
@@ -40,12 +42,18 @@ export ETHERSCAN_TOKEN=LOREM1234
 
 ```
 
+After you saved your `.env` file read it with the following :
+
+```bash
+source .env
+```
+
 
 ### Deploy
 
 To deploy, for instance on Kovan, run the following :
 
-` brownie run scripts/deploy_mutual_fund.py --network kovan`
+`brownie run scripts/deploy_mutual_fund.py --network kovan`
 
 ### Tests
 
@@ -70,6 +78,19 @@ If you have some troubles, try the following, to fetch to the front-end folder t
 `brownie run scripts/update_front_end.py`
 
 
+The front-end is not complete, for now it's only possible to enter the contract (and fund it at the same time) and to submit a request.
+
+#### Enter the contract
+
+First connnect using the Connect Button.
+
+To enter the contract go to the Dashboard tab, fill in the amount you want to send to the contract then click Enter, you should receive a notification message stating that you entered succesfully the Mutual Fund.
+
+#### Submit a request
+
+Go to the Requests tabs.
+
+Fill in the amount (in WEI) you want to request, then click on submit a request. You should get a notification about the success of the transaction.
 
 
 ## Note on automatic insertion of users while deploying
@@ -94,7 +115,7 @@ It's actually not mandatory, you can comment the function `add_users_to_contract
 
 ## Notes
 
-Ideally the random array of users that constitutes the jury members should really be random using Chainlink VRF but as I had troubles testing it, it's simply hardcoded for now to the same jury members all the time.
+Ideally the random array of users that composes the jury members should really be random using Chainlink VRF but as I had troubles testing it, it's simply hardcoded for now to the same jury members all the time.
 
 
 ## Technologies used
