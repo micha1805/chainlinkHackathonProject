@@ -3,12 +3,15 @@ import React from 'react';
 // import './App.css';
 import {Header} from './components/Header'
 import {Main} from './components/Main'
+import { Container } from "@mui/material"
 
 function App() {
   return (
   	<>
   		<Header/>
-  		<Main />
+  	  <Container maxWidth="md">
+        <Main />
+      </Container>
   	</>
 
   );

@@ -1,13 +1,7 @@
 import React from "react"
 
 
-interface JuryProps {
-    account: number;
-    contract: number;
-}
-
-
-export const Jury = ({account, contract}: JuryProps) => {
+export const Jury = () => {
 
 	return(<div>JURY</div>)
 

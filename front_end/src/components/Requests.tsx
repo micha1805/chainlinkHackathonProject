@@ -1,12 +1,7 @@
 import React from "react"
 
-interface RequestProps {
-    account: number;
-    contract: number;
-}
 
-
-export const Requests = ({account, contract}: RequestProps) => {
+export const Requests = () => {
 
 	return(<div>REQUESTS</div>)
 

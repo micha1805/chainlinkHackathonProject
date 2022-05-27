@@ -7,8 +7,6 @@ export const Header = () => {
 
 const { account, activateBrowserWallet, deactivate } = useEthers()
 const isConnected = account !== undefined
-console.log("type of account", typeof(account))
-
 
 	return (
 		<div className="header-component">
