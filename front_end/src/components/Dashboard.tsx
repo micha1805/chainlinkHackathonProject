@@ -1,7 +1,16 @@
 import React from "react"
 
-export const Dashboard = () => {
+interface DashboardProps {
+    account: number;
+    contract: number;
+}
 
-	return(<div>DASHBOARD</div>)
+
+export const Dashboard = ({ account, contract }: DashboardProps) => {
+
+	return(
+		<div className="dashboard-component">
+		DASHBOARD
+		</div>)
 
 }

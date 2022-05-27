@@ -42,13 +42,13 @@ const isConnected = account !== undefined
 					    </TabList>
 					  </Box>
 					  <TabPanel value="1">
-					  	<Dashboard/>
+					  	<Dashboard account={123} contract={1234}/>
 					  </TabPanel>
 					  <TabPanel value="2">
-					  	<Requests/>
+					  	<Requests account={123} contract={1234}/>
 					  </TabPanel>
 					  <TabPanel value="3">
-					  	<Jury/>
+					  	<Jury account={123} contract={1234}/>
 					  </TabPanel>
 					</TabContext>
 
