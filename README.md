@@ -57,7 +57,7 @@ To deploy, for instance on Kovan, run the following :
 
 ### Tests
 
-My whole test are in the following test script : `tests/test_unit_tests_list.py`
+My whole tests are in the following test script : `tests/test_unit_tests_list.py`
 
 If you want to run the tests, on the root folder run :
 `brownie test`
@@ -111,7 +111,7 @@ user9`
 
 It's a ways of always pushing 10 users in the contract just after deployment.
 
-It's actually not mandatory, you can comment the function `add_users_to_contract`in the deploy script to skip this auto load, but because of the way the jury members arrays is hardcoded the contract needs at least 9 users to create a request properly. You can choose to add them manually or using this method.
+It's actually not mandatory, you can comment the function `add_users_to_contract`in the deploy script to skip this auto load, but because of the way the jury members array is hardcoded the contract needs at least 9 users to create a request properly. You can choose to add them manually or using this method.
 
 ## Notes
 
@@ -136,6 +136,6 @@ For now the contract has and admin, a single account. Ideally this admin capacit
 
 Building this all alone, on the side, while still having a full time day job and a young child to take care of, could explain some parts of the incompleteness of this project (especially the front-end and the VRF), but whatever it was a nice experience !
 
-Have a good day whoever reads this !
+Have a good day to whoever reads this !
 
 
