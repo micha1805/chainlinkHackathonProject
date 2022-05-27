@@ -3,9 +3,9 @@ import pytest
 from scripts.helpful_scripts import (
 	LOCAL_BLOCKCHAIN_ENVIRONMENTS,
 	get_account,
-	get_contract,
-	deploy_mutual_fund
+	get_contract
 	)
+from scripts.deploy_mutual_fund import deploy_mutual_fund
 
 # ## list of tests todo
 
