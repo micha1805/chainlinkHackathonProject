@@ -5,83 +5,106 @@
 
 The project consists in creating a Smart Contract of a mutual fund.
 
-Anyone can enter the fund and request a sum under some conditions.
-
-
+Anyone can enter the fund and request a sum.
 
 
 
 ## How does it work?
 
-Insert an image / graph showing the contract, the users, the jury member, what they can do.
+You enter the fund via the `enter` function.
 
-## User stories
+When you enter the contract you can submit a request using the `submitARequest` function.
 
-- A user needs to pay a monthly fee, anything greater than 0, the value is still important because it sets the amount that can be requested if needed. If the total contribition is very small, then the amount requestable is smaller too. The
-
-- A user can be selected as a juree to check someone else's request. If the user does not answer in time (set to one month currently), he is banned from the fund and all his previous contribution is kept in the fund. He can come back, but all his contributions are set back to 0, which is important because it sets the total amounta user can request.
-
-
-
+When you call this `submitARequest` function this creates a request struct containing the following informations :
+- the amount desired
+- your address (to transfer the funds)
+- an array of random users that will constitute the jury memebers that will decide if your request is valid or not. (its length is fixed to 5)
 
 
-## Request conditions
+(Ideally some information about the request should be inserted but it's not yet implemented.)
 
-The total amount requested cannot be greater than 10 times his total contribtion, if this is still the case but that amount is greater than 1% of the fund, than this last value will be the one that can be granted.
 
-A request NFT is created, containing all the details of the request.
-
-### NFT structure
-
-For each request an NFT is mint, that way liars are spotted for the eternity!
+When a request is made each jury member must vote for that specific request using the function `voteForARequest`, when each jury member has voted the amount requested is transfered to the requester or nothing is done and the status of the request is just set to refused.
 
 
 
-```json
-fullname and REAL ID
-request decription
+## How to use
 
-urls of information
+Once the repo is pulled add to root of the project an `.env` file containing the following informations :
+
+
+```bash
+export PRIVATE_KEY=0x123456789
+export WEB3_INFURA_PROJECT_ID=LOREM1234
+export ETHERSCAN_TOKEN=LOREM1234
+
 ```
 
 
-## Ban conditions
+### Deploy
 
-A juree does not answer the request.
-A requester is found out to have lied.
+To deploy, for instance on Kovan, run the following :
 
-When a user is
+` brownie run scripts/deploy_mutual_fund.py --network kovan`
+
+### Tests
+
+My whole test are in the test scripts : tests/test_unit_tests_list.py
+
+If you want to run the tests, on the root folder run :
+`brownie test`
 
 
-## Random jurees
+### Front end
 
-For any request a random sample of jurees is chosen in the array od users. The randomness uses the Chainlink VRF service.
+If you want to run the front end, go to the `front_end` folder, first install the dependencies :
+`npm install`
 
-By default it is setup to 100 people randmoly chosen.
+Then launch the app :
+`npm start`
 
-## Improvements
+It should run on localhost:3000
 
-- Incentives for jurees to make the good choice, and not just clickig yes all the time ? Ban ?
-- Incentives for not just plainly lying on the request ? Just a ban??
-- VRF for each 100 juree ? Or one (real) random number plus pseudo random number to get all the 99 aother jurees ?
+
+If you have some troubles, try the following, to fetch to the front-end folder the information from the backend :
+`brownie run scripts/update_front_end.py`
+
+
+
+
+## Note on automatic insertion of users while deploying
+
+In the deploy script there is a `load_accounts` functions used to load 10 brownie user accounts named the following :
+
+`user0
+user1
+user2
+user3
+user4
+user5
+user6
+user7
+user8
+user9`
+
+
+It's a ways of always pushing 10 users in the contract just after deployment.
+
+It's actually not mandatory, you can comment the function `add_users_to_contract`in the deploy script to skip this auto load, but because of the way the jury members arrays is hardcoded the contract needs at least 9 users to create a request properly. You can choose to add them manually or using this method.
+
+## Notes
+
+Ideally the random array of users that constitutes the jury members should really be random using Chainlink VRF but as I had troubles testing it, it's simply hardcoded for now to the same jury members all the time.
 
 
 ## Technologies used
 
 - Solidity on Ethereum.
 - brownie as the back end framework
-- Chainlink VRF for selectong randm jurees, chainlink keeper to do the cron job of checking each month if each user has paid his contributtion, and also check if each juree has answered in time.
-- React for the FrontEnd
+- Chainlink VRF for selecting randm jurees (not yet actually)
+- React/TypeScript for the FrontEnd
 
 
 ## admin powers
 
 For now the contract has and admin, a single account. Ideally this admin capacity should be distributed via an admin contract for instance, where all the changes should be submitted to a vote. For the purpose of the hackathon, I just made a simple single user, which is not ideal of course regarding decentralization.
-
-The admin can set the following parameters :
-
-- number of jurees
-- delay to judge a request
-- max amount per request according to user balance
-- max amount per request according to MutulaFund total balance (percentage of total)
-
