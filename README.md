@@ -32,9 +32,9 @@ When a request is made each jury member must vote for that specific request usin
 
 ## How to use
 
-Once the repo is pulled add to the root of the project an `.env` file containing the following informations :
+Once the repo is pulled, you need to add to the root of the project an `.env` file containing the following informations :
 
-
+(example)
 ```bash
 export PRIVATE_KEY=0x123456789
 export WEB3_INFURA_PROJECT_ID=LOREM1234
@@ -90,7 +90,7 @@ To enter the contract go to the Dashboard tab, fill in the amount you want to se
 
 Go to the Requests tabs.
 
-Fill in the amount (in WEI) you want to request, then click on submit a request. You should get a notification about the success of the transaction.
+Fill in the amount (in WEI) you want to request, then click on make a request. You should get a notification about the success of the transaction.
 
 
 ## Note on automatic insertion of users while deploying
@@ -118,12 +118,13 @@ It's actually not mandatory, you can comment the function `add_users_to_contract
 Ideally the random array of users that composes the jury members should really be random using Chainlink VRF but as I had troubles testing it, it's simply hardcoded for now to the same jury members all the time.
 
 
-## Technologies used
+## Stack used
 
 - Solidity on Ethereum.
+- Remix for testing various stuff on Solidity
 - brownie as the back end framework
-- Chainlink VRF for selecting randm jurees (not yet actually)
-- React/TypeScript for the FrontEnd
+- Chainlink VRF for selecting random jury members (not yet actually)
+- React/TypeScript with useDAPP for the FrontEnd
 
 
 ## admin powers
