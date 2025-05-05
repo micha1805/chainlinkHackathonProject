@@ -139,3 +139,6 @@ dmypy.json
 
 # for the front app :
 node_modules
+
+# MacOS
+.DS_Store

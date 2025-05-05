@@ -86,8 +86,11 @@ def test_a_user_cannot_enter_twice():
 	# attempt to enter the contract :
 	mutual_fund.enter({"from": random_user})
 
-	with pytest.raises(exceptions.VirtualMachineError):
+	try:
 		mutual_fund.enter({"from": random_user})
+		pytest.fail("Transaction should have reverted")
+	except Exception as e:
+		assert "User is already present in the Fund" in str(e)
 
 
 
@@ -104,8 +107,11 @@ def test_a_user_not_belonging_to_the_contract_cannot_submit_a_request():
 	# create a random user
 	random_user = get_account(2)
 
-	with pytest.raises(exceptions.VirtualMachineError):
+	try:
 		mutual_fund.submitARequest(1234, {"from": random_user})
+		pytest.fail("Transaction should have reverted")
+	except Exception as e:
+		assert "User must enter the contract first" in str(e)
 
 
 
@@ -163,8 +169,11 @@ def test_user_cannot_submit_a_request_if_contract_is_busy():
 	# set contract state to busy :
 	mutual_fund.setContractState(1, {"from": owner})
 
-	with pytest.raises(exceptions.VirtualMachineError):
+	try:
 		mutual_fund.submitARequest(amount_requested, {"from": owner})
+		pytest.fail("Transaction should have reverted")
+	except Exception as e:
+		assert "Contract is currently busy building a set of jury members" in str(e)
 
 
 def test_user_can_submit_a_request():
@@ -269,9 +278,11 @@ def test_a_non_jury_member_cannot_vote():
 	# submit a request :
 	mutual_fund.submitARequest(1234, {"from": user})
 
-	with pytest.raises(exceptions.VirtualMachineError):
-		# try to vote for the request, as NOT a jury member :
+	try:
 		mutual_fund.voteForARequest(0, False, {"from": user})
+		pytest.fail("Transaction should have reverted")
+	except Exception as e:
+		assert "You must be a jury member for that request" in str(e)
 
 
 	# assert(mutual_fund.voteForARequest(0, False, {"from": userJury}))
@@ -299,9 +310,11 @@ def test_a_jury_member_cannot_vote_twice():
 	print(f" Jury Member has voted : {jury_member_has_voted}")
 	print(f" Non Jury Member has not voted : {non_jury_member_has_not_voted}")
 
-	with pytest.raises(exceptions.VirtualMachineError):
-		# try to vote for the request, as NOT a jury member :
+	try:
 		mutual_fund.voteForARequest(0, False, {"from": userJury})
+		pytest.fail("Transaction should have reverted")
+	except Exception as e:
+		assert "you have already voted" in str(e)
 
 
 
@@ -397,7 +410,7 @@ def test_check_the_values_tracking_the_votes():
 
 	last_request = mutual_fund.all_requests_array(0, {"from": owner})
 	contract_balance_in_wei = mutual_fund.balance()
-	contract_balance_in_eth = web3.fromWei(contract_balance_in_wei , "ether")
+	contract_balance_in_eth = web3.from_wei(contract_balance_in_wei , "ether")
 
 	print(jury_members)
 	print(f"Request : {last_request}")

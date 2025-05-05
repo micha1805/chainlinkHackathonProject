@@ -29,7 +29,7 @@ contract_to_mock = {
 }
 
 DECIMALS = 18
-INITIAL_VALUE = web3.toWei(2000, "ether")
+INITIAL_VALUE = web3.to_wei(2000, "ether")
 
 
 
